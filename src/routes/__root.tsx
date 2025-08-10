@@ -7,10 +7,12 @@ import {
   Scripts,
   DefaultGlobalNotFound,
 } from "@tanstack/react-router";
-import appCss from "@app/app.css?url";
+import Navbar from "src/components/navbar";
+import appCSS from "@/styles/app.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
+    links: [{ rel: "stylesheet", href: appCSS }],
     meta: [
       {
         charSet: "utf-8",
@@ -23,7 +25,6 @@ export const Route = createRootRoute({
         title: "Expenses Tracker",
       },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
   }),
   component: RootComponent,
   notFoundComponent: DefaultGlobalNotFound,
@@ -33,6 +34,7 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <RootDocument>
+      <Navbar />
       <Outlet />
     </RootDocument>
   );

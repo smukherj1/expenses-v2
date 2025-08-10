@@ -2,9 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@app/*": [
-        "src/*"
-      ]
+      "@/*": ["./src/*"]
     },
     // Environment setup & latest features
     "lib": ["ESNext"],

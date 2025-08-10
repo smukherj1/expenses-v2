@@ -5,5 +5,9 @@ export const Route = createFileRoute("/search")({
 });
 
 function Search() {
-  return <>Search Page</>;
+  return (
+    <>
+      <p>Search Page</p>
+    </>
+  );
 }

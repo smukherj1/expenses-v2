@@ -1,9 +1,3 @@
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from "./ui/navigation-menu";
 import { Link } from "@tanstack/react-router";
 
 interface linkData {
@@ -17,18 +11,12 @@ export default function Navbar() {
     { to: "/search", name: "Search" },
   ];
   return (
-    <NavigationMenu viewport={false}>
-      <NavigationMenuList>
-        {links.map(({ to, name }) => {
-          return (
-            <NavigationMenuItem key={name}>
-              <NavigationMenuLink asChild>
-                <Link to={to}>{name}</Link>
-              </NavigationMenuLink>
-            </NavigationMenuItem>
-          );
-        })}
-      </NavigationMenuList>
-    </NavigationMenu>
+    <nav className="bg-amber-200">
+      {links.map((link) => (
+        <Link to={link.to} key={link.name}>
+          {link.name}
+        </Link>
+      ))}
+    </nav>
   );
 }
