@@ -11,12 +11,21 @@ export default function Navbar() {
     { to: "/search", name: "Search" },
   ];
   return (
-    <nav className="bg-amber-200">
-      {links.map((link) => (
-        <Link to={link.to} key={link.name}>
-          {link.name}
-        </Link>
-      ))}
-    </nav>
+    <div className="navbar bg-base-100 shadow-sm">
+      <div className="flex-1">
+        <span className="btn btn-ghost text-xl">Expenses Tracker</span>
+      </div>
+      <div className="flex-none">
+        <ul className="menu menu-horizontal px-1">
+          {links.map(({ to, name }) => {
+            return (
+              <li key={name}>
+                <Link to={to}>{name}</Link>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
   );
 }
