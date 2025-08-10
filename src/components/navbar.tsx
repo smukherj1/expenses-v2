@@ -2,30 +2,33 @@ import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuLink,
+  NavigationMenuList,
 } from "./ui/navigation-menu";
 import { Link } from "@tanstack/react-router";
 
 interface linkData {
-  path: string;
+  to: string;
   name: string;
 }
 
 export default function Navbar() {
   const links: linkData[] = [
-    { path: "/", name: "Home" },
-    { path: "/search", name: "Search" },
+    { to: "/", name: "Home" },
+    { to: "/search", name: "Search" },
   ];
   return (
-    <NavigationMenu>
-      {links.map(({ path, name }) => {
-        return (
-          <NavigationMenuItem>
-            <NavigationMenuLink asChild>
-              <Link to={path}>{name}</Link>
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-        );
-      })}
+    <NavigationMenu viewport={false}>
+      <NavigationMenuList>
+        {links.map(({ to, name }) => {
+          return (
+            <NavigationMenuItem key={name}>
+              <NavigationMenuLink asChild>
+                <Link to={to}>{name}</Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+          );
+        })}
+      </NavigationMenuList>
     </NavigationMenu>
   );
 }
