@@ -20,7 +20,13 @@ export default function Navbar() {
           {links.map(({ to, name }) => {
             return (
               <li key={name}>
-                <Link to={to}>{name}</Link>
+                <Link
+                  to={to}
+                  className="font-bold"
+                  activeProps={{ className: "text-rose-500" }}
+                >
+                  {name}
+                </Link>
               </li>
             );
           })}
