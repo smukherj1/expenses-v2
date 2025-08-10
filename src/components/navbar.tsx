@@ -9,6 +9,7 @@ export default function Navbar() {
   const links: linkData[] = [
     { to: "/", name: "Home" },
     { to: "/search", name: "Search" },
+    { to: "/manage", name: "Manage" },
   ];
   return (
     <div className="navbar bg-base-100 shadow-sm">

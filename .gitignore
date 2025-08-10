@@ -38,3 +38,6 @@ data
 
 # Drizzle generated outputs
 drizzle
+
+# Python virtual env
+.venv

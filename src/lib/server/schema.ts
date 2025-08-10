@@ -4,4 +4,6 @@ export const usersTable = sqliteTable("transactions", {
   date: int().notNull(),
   desc: text().notNull(),
   amountCents: int().notNull(),
+  source: text().notNull(),
+  tag: text(),
 });
