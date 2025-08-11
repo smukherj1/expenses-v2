@@ -42,7 +42,10 @@ function Manage() {
         onSubmit={async (e) => {
           e.preventDefault();
           const formData = new FormData(e.currentTarget);
-          await uploadTxns({ data: formData });
+          const resp = await uploadTxns({ data: formData });
+          if (resp) {
+            console.log(`Upload result: ${resp}`);
+          }
         }}
       >
         <input
