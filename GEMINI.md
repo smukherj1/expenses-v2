@@ -7,7 +7,8 @@ The Web UI will have the following capabilities:
 - A Search page to search for transactions by their date, description, amount, source or tag. Allows the user to add, update or remove the
   tag on one or more fetched transactions.
 
-- A Manage page to download or upload all transactions as a CSV.
+- A Manage page to uploads transactions from a JSON file and download all transactions in the db as a JSON file (in the same format supported by upload).
+  The manage page also allows deleting all transactions currently in the database.
 
 # Building and Running
 
