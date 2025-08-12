@@ -9,6 +9,11 @@ import {
 } from "@tanstack/react-router";
 import Navbar from "src/components/navbar";
 import appCSS from "@/styles/app.css?url";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+// Tanstack Query client.
+const queryClient = new QueryClient();
 
 export const Route = createRootRoute({
   head: () => ({
@@ -34,8 +39,11 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <RootDocument>
-      <Navbar />
-      <Outlet />
+      <QueryClientProvider client={queryClient}>
+        <Navbar />
+        <Outlet />
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
     </RootDocument>
   );
 }
