@@ -1,4 +1,4 @@
-# expenses-tanstack
+# expenses-v2
 
 To install dependencies:
 
