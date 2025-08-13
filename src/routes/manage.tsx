@@ -1,5 +1,10 @@
+import { TxnSchema, UploadTxns } from "@/lib/server/db/transactions";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { z } from "zod";
+
+const txnsSchema = z.array(TxnSchema);
 
 const uploadTxns = createServerFn({
   method: "POST",
@@ -21,9 +26,13 @@ const uploadTxns = createServerFn({
     const contents = await file.text();
     try {
       const json = JSON.parse(contents);
-      console.log(json);
+      const result = txnsSchema.safeParse(json);
+      if (!result.success) {
+        throw result.error.format();
+      }
+      UploadTxns(result.data);
     } catch (error) {
-      return new Error(`Received invalid JSON file: ${error}`);
+      throw new Error(`Received invalid JSON file: ${error}`);
     }
   });
 
@@ -38,6 +47,9 @@ export const Route = createFileRoute("/manage")({
 });
 
 function Manage() {
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
   return (
     <>
       {/* Upload Txns from file */}
@@ -49,10 +61,20 @@ function Manage() {
           className="flex items-center gap-4"
           onSubmit={async (e) => {
             e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            const resp = await uploadTxns({ data: formData });
-            if (resp) {
-              console.log(`Upload result: ${resp}`);
+            setError(null);
+            setSuccess(null);
+            const form = e.currentTarget;
+            const formData = new FormData(form);
+            try {
+              await uploadTxns({ data: formData });
+              setSuccess("File uploaded successfully!");
+              form.reset();
+            } catch (err) {
+              if (err instanceof Error) {
+                setError(err.message);
+              } else {
+                setError("An unknown error occurred");
+              }
             }
           }}
         >
@@ -67,6 +89,8 @@ function Manage() {
             Upload
           </button>
         </form>
+        {error && <div className="text-red-500 p-4">{error}</div>}
+        {success && <div className="text-green-500 p-4">{success}</div>}
       </div>
       {/* Download Txns as file */}
       <div className="flex flex-row p-4 gap-4">
