@@ -32,3 +32,8 @@ export async function UploadTxns(txns: Txn[]) {
   );
   return result.rowsAffected;
 }
+
+export async function DeleteTxns() {
+  const result = await db.delete(transactionsTable);
+  return result.rowsAffected;
+}

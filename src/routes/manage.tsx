@@ -1,7 +1,10 @@
-import { TxnSchema, UploadTxns } from "@/lib/server/db/transactions";
+import {
+  DeleteTxns,
+  TxnSchema,
+  UploadTxns,
+} from "@/lib/server/db/transactions";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn, useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
 import { z } from "zod/v4";
 import {
   fromError as fromZodError,
@@ -64,6 +67,12 @@ const downloadTxns = createServerFn({
   return '{["sample", "json"]}';
 });
 
+const deleteTxns = createServerFn({
+  method: "POST",
+}).handler(async () => {
+  return DeleteTxns();
+});
+
 export const Route = createFileRoute("/manage")({
   component: Manage,
 });
@@ -72,6 +81,7 @@ function Manage() {
   const uploader = useMutation({
     mutationFn: useServerFn(uploadTxns),
   });
+  const deleter = useMutation({ mutationFn: useServerFn(deleteTxns) });
 
   return (
     <>
@@ -132,6 +142,28 @@ function Manage() {
         >
           Download
         </button>
+      </div>
+
+      {/* Delete All Txns */}
+      <div className="flex flex-row p-4 gap-4">
+        <h2 className="text-2xl mb-4">Delete All Transactions</h2>
+        <button
+          className="btn btn-error"
+          onClick={async () => {
+            await deleter.mutate({});
+          }}
+        >
+          Delete
+        </button>
+        {deleter.isPending && <div className="p-4">Uploading...</div>}
+        {deleter.isError && (
+          <div className="text-red-500 p-4">{deleter.error.message}</div>
+        )}
+        {deleter.isSuccess && (
+          <div className="text-green-500 p-4">
+            Successfully deleted {deleter.data} transactions.
+          </div>
+        )}
       </div>
     </>
   );
