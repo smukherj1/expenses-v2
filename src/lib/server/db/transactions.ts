@@ -3,10 +3,7 @@ import { db } from "./client";
 import { transactionsTable } from "./schema";
 
 export const TxnSchema = z.object({
-  date: z
-    .string()
-    .regex(/^\d{4}\/\d{2}\/\d{2}$/, "Date must be in yyyy/mm/dd format")
-    .pipe(z.coerce.date()),
+  date: z.string().pipe(z.coerce.date()),
   description: z.string().max(256),
   amount: z
     .string()
@@ -31,6 +28,19 @@ export async function UploadTxns(txns: Txn[]) {
     })
   );
   return result.rowsAffected;
+}
+
+export async function GetTxns(): Promise<Txn[]> {
+  const result = await db.select().from(transactionsTable);
+  return result.map((t) => {
+    return {
+      date: new Date(t.date),
+      description: t.desc,
+      amount: (t.amountCents / 100).toFixed(2),
+      institution: t.institution,
+      tag: t.tag ? t.tag : undefined,
+    };
+  });
 }
 
 export async function DeleteTxns() {

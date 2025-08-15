@@ -1,5 +1,6 @@
 import {
   DeleteTxns,
+  GetTxns,
   TxnSchema,
   UploadTxns,
 } from "@/lib/server/db/transactions";
@@ -64,7 +65,8 @@ const uploadTxns = createServerFn({
 const downloadTxns = createServerFn({
   method: "GET",
 }).handler(async () => {
-  return '{["sample", "json"]}';
+  const txns = await GetTxns();
+  return JSON.stringify(txns);
 });
 
 const deleteTxns = createServerFn({
