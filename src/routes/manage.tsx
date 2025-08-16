@@ -42,7 +42,12 @@ const uploadTxns = createServerFn({
     const contents = await file.text();
     var json: any;
     try {
-      json = JSON.parse(contents);
+      json = JSON.parse(contents, (key, value) => {
+        if (key === "date" && typeof value === "string") {
+          return new Date(value);
+        }
+        return value;
+      });
     } catch (error) {
       throw new Error(`Received invalid JSON file: ${error}`);
     }
@@ -76,7 +81,20 @@ const downloadTxns = createServerFn({
   })
   .handler(async (ctx) => {
     const txns = await GetTxns({ from: ctx.data.from, to: ctx.data.to });
-    return JSON.stringify(txns, null, 2);
+    return JSON.stringify(
+      txns,
+      (key, value) => {
+        if (key === "date" && typeof value === "string") {
+          const date = new Date(value);
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          return `${year}-${month}-${day}`;
+        }
+        return value;
+      },
+      2
+    );
   });
 
 const deleteTxns = createServerFn({

@@ -4,7 +4,7 @@ import { transactionsTable } from "./schema";
 import { and, asc, gte, lte } from "drizzle-orm";
 
 export const TxnSchema = z.object({
-  date: z.string().pipe(z.coerce.date()),
+  date: z.date(),
   description: z.string().max(256),
   amount: z
     .string()
