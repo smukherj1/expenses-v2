@@ -1,6 +1,5 @@
 {
-  "name": "expenses-tanstack",
-  "module": "index.ts",
+  "name": "expenses-v2",
   "type": "module",
   "private": true,
   "devDependencies": {
@@ -40,7 +39,7 @@
     "zod-validation-error": "^4.0.1"
   },
   "scripts": {
-    "dev": "bunx --bun vite",
-    "build": "bunx --bun vite build"
+    "dev": "vite",
+    "build": "vite build"
   }
 }
