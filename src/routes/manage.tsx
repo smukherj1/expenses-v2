@@ -11,7 +11,8 @@ import {
   fromError as fromZodError,
   createErrorMap,
 } from "zod-validation-error";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 z.config({
   customError: createErrorMap({
@@ -62,12 +63,21 @@ const uploadTxns = createServerFn({
     return uploaded;
   });
 
+const downloadTxnsReqSchema = z.object({
+  from: z.date(),
+  to: z.date(),
+});
+
 const downloadTxns = createServerFn({
   method: "GET",
-}).handler(async () => {
-  const txns = await GetTxns();
-  return JSON.stringify(txns);
-});
+})
+  .validator((req: unknown) => {
+    return downloadTxnsReqSchema.parse(req);
+  })
+  .handler(async (ctx) => {
+    const txns = await GetTxns({ from: ctx.data.from, to: ctx.data.to });
+    return JSON.stringify(txns, null, 2);
+  });
 
 const deleteTxns = createServerFn({
   method: "POST",
@@ -84,6 +94,14 @@ function Manage() {
     mutationFn: useServerFn(uploadTxns),
   });
   const deleter = useMutation({ mutationFn: useServerFn(deleteTxns) });
+  const [downloadFrom, setDownloadFrom] = useState("2010-01-01");
+  const [downloadTo, setDownloadTo] = useState(formatDate(new Date()));
+  const downloadDates = validateDates({
+    from: downloadFrom,
+    to: downloadTo,
+  });
+  const downloader = useServerFn(downloadTxns);
+  const [downloadError, setDownloadError] = useState("");
 
   return (
     <>
@@ -125,10 +143,41 @@ function Manage() {
       {/* Download Txns as file */}
       <div className="flex flex-row p-4 gap-4">
         <h2 className="text-2xl mb-4">Download transactions as JSON</h2>
+        <label className="input">
+          <span className="label">From</span>
+          <input
+            type="date"
+            className="input"
+            value={downloadFrom}
+            onChange={(e) => setDownloadFrom(e.target.value)}
+          />
+        </label>
+        <label className="input">
+          <span className="label">To</span>
+          <input
+            type="date"
+            className="input"
+            value={downloadTo}
+            onChange={(e) => setDownloadTo(e.target.value)}
+          />
+        </label>
         <button
           className="btn btn-primary"
+          disabled={downloadDates.error}
           onClick={async () => {
-            const resp = await downloadTxns();
+            setDownloadError("");
+            if (downloadDates.error) {
+              return;
+            }
+            var resp: string;
+            try {
+              resp = await downloader({
+                data: { from: downloadDates.from, to: downloadDates.to },
+              });
+            } catch (error) {
+              setDownloadError(`Error downloading transactions: ${error}`);
+              return;
+            }
             if (resp) {
               const blob = new Blob([resp], { type: "application/json" });
               const url = URL.createObjectURL(blob);
@@ -144,6 +193,12 @@ function Manage() {
         >
           Download
         </button>
+        {downloadDates.error && (
+          <div className="text-red-500 p-4">{downloadDates.message}</div>
+        )}
+        {downloadError && (
+          <div className="text-red-500 p-4">{downloadError}</div>
+        )}
       </div>
 
       {/* Delete All Txns */}
@@ -169,4 +224,49 @@ function Manage() {
       </div>
     </>
   );
+}
+
+function formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed, so add 1
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function validateDates({ from, to }: { from: string; to: string }):
+  | {
+      error: true;
+      message: string;
+    }
+  | {
+      error: false;
+      from: Date;
+      to: Date;
+    } {
+  const f = new Date(from);
+  if (isNaN(f.getTime())) {
+    return {
+      error: true,
+      message: `${from} is not a valid date`,
+    };
+  }
+  const t = new Date(to);
+  if (isNaN(t.getTime())) {
+    return {
+      error: true,
+      message: `${to} is not a valid date`,
+    };
+  }
+  if (f > t) {
+    return {
+      error: true,
+      message: `From date ${from} can't be after To date ${to}`,
+    };
+  }
+  return {
+    error: false,
+    from: f,
+    to: t,
+  };
 }

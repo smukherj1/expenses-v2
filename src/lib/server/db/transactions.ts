@@ -1,6 +1,7 @@
 import { z } from "zod/v4";
 import { db } from "./client";
 import { transactionsTable } from "./schema";
+import { and, asc, gte, lte } from "drizzle-orm";
 
 export const TxnSchema = z.object({
   date: z.string().pipe(z.coerce.date()),
@@ -30,8 +31,24 @@ export async function UploadTxns(txns: Txn[]) {
   return result.rowsAffected;
 }
 
-export async function GetTxns(): Promise<Txn[]> {
-  const result = await db.select().from(transactionsTable);
+export async function GetTxns({
+  from,
+  to,
+}: {
+  from: Date;
+  to: Date;
+}): Promise<Txn[]> {
+  console.log(`GetTxns(from=${from}, to=${to})`);
+  const result = await db
+    .select()
+    .from(transactionsTable)
+    .where(
+      and(
+        gte(transactionsTable.date, from.getTime()),
+        lte(transactionsTable.date, to.getTime())
+      )
+    )
+    .orderBy(asc(transactionsTable.date), asc(transactionsTable.id));
   return result.map((t) => {
     return {
       date: new Date(t.date),
