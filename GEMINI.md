@@ -17,17 +17,26 @@ The Web UI will have the following capabilities:
 To run the development server, run the following command in the background:
 
 ```bash
-bun run dev
+npm run dev
 ```
 
 The application will be available at `http://localhost:3000`.
 
-**Build:**
+**Production Build:**
 
-To build the application for production, use the following command:
+The app is built into a Docker container for production using the Dockerfile at
+app.Dockerfile.
+
+To build the application for production into a docker container
 
 ```bash
-bun run build
+scripts/build.sh
+```
+
+and run the container using
+
+```bash
+scripts/run.sh
 ```
 
 # Development Conventions

@@ -1,3 +1,3 @@
 #!/usr/bin/bash
 
-docker run -p 3000:3000 expenses-v2
+docker run --rm -v ${PWD}/data:/app/data -p 3000:3000 expenses-v2

@@ -1,5 +1,5 @@
 FROM node:24.6.0-alpine3.22 AS base
-WORKDIR /usr/src/app
+WORKDIR /app
 
 FROM base AS install
 RUN mkdir -p /temp/prod
@@ -14,8 +14,9 @@ RUN npm run build
 
 FROM base AS release
 COPY --from=install /temp/prod/node_modules node_modules
-COPY --from=builder /usr/src/app/.output .output
-COPY --from=builder /usr/src/app/package.json .
+COPY --from=builder /app/.output .output
+COPY --from=builder /app/package.json .
+ENV DB_FILE_NAME=file:data/local.db
 
 USER node
 EXPOSE 3000/tcp

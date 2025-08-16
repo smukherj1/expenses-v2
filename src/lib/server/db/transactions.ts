@@ -38,7 +38,6 @@ export async function GetTxns({
   from: Date;
   to: Date;
 }): Promise<Txn[]> {
-  console.log(`GetTxns(from=${from}, to=${to})`);
   const result = await db
     .select()
     .from(transactionsTable)
