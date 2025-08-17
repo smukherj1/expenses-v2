@@ -31,25 +31,58 @@ export async function UploadTxns(txns: Txn[]) {
   return result.rowsAffected;
 }
 
-export async function GetTxns({
-  from,
-  to,
-}: {
+interface TxnCursor {
+  date: Date;
+  id: number;
+}
+
+interface GetTxnsOpts {
   from: Date;
   to: Date;
-}): Promise<Txn[]> {
-  const result = await db
+  pageSize: number;
+  next?: TxnCursor;
+}
+
+const DefaultGetTxnOpts: GetTxnsOpts = {
+  from: new Date(0),
+  to: new Date(),
+  pageSize: 0, // No page limit.
+};
+
+interface TxnsResult {
+  txns: Txn[];
+  next?: TxnCursor;
+}
+
+export async function GetTxns(
+  popts: Partial<GetTxnsOpts>
+): Promise<TxnsResult> {
+  const opts: GetTxnsOpts = {
+    from: popts.from || DefaultGetTxnOpts.from,
+    to: popts.to || DefaultGetTxnOpts.to,
+    pageSize: popts.pageSize || DefaultGetTxnOpts.pageSize,
+    next: popts.next || DefaultGetTxnOpts.next,
+  };
+  if (opts.pageSize < 0) {
+    throw new Error(
+      `invalid pageSize given to GetTxns, got ${opts.pageSize}, want <= 0`
+    );
+  }
+  let q = db
     .select()
     .from(transactionsTable)
     .where(
       and(
-        gte(transactionsTable.date, from.getTime()),
-        lte(transactionsTable.date, to.getTime())
+        gte(transactionsTable.date, opts.from.getTime()),
+        lte(transactionsTable.date, opts.to.getTime())
       )
     )
     .orderBy(asc(transactionsTable.date), asc(transactionsTable.id));
-  return result.map((t) => {
+  const limit = opts.pageSize > 0 ? opts.pageSize + 1 : undefined;
+  const result = await (limit ? q.limit(limit) : q);
+  const txs = result.map((t) => {
     return {
+      id: t.id,
       date: new Date(t.date),
       description: t.desc,
       amount: (t.amountCents / 100).toFixed(2),
@@ -57,6 +90,24 @@ export async function GetTxns({
       tag: t.tag ? t.tag : undefined,
     };
   });
+  const next =
+    limit && txs.length === limit
+      ? {
+          date: txs.at(-1)!.date,
+          id: txs.at(-1)!.id,
+        }
+      : undefined;
+  const txns = txs.map((t) => ({
+    date: t.date,
+    description: t.description,
+    amount: t.amount,
+    institution: t.institution,
+    tag: t.tag,
+  }));
+  return {
+    txns,
+    next,
+  };
 }
 
 export async function DeleteTxns() {

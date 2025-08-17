@@ -80,9 +80,9 @@ const downloadTxns = createServerFn({
     return downloadTxnsReqSchema.parse(req);
   })
   .handler(async (ctx) => {
-    const txns = await GetTxns({ from: ctx.data.from, to: ctx.data.to });
+    const result = await GetTxns({ from: ctx.data.from, to: ctx.data.to });
     return JSON.stringify(
-      txns,
+      result.txns,
       (key, value) => {
         if (key === "date" && typeof value === "string") {
           const date = new Date(value);
