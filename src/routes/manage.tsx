@@ -122,21 +122,12 @@ function Manage() {
   const [downloadError, setDownloadError] = useState("");
 
   return (
-    <>
+    <div className="flex flex-col items-center justify-center h-full gap-4">
       {/* Upload Txns from file */}
-      <div className="p-4">
-        <h2 className="text-2xl mb-4">Upload transactions as JSON</h2>
-        <form
-          method="post"
-          encType="multipart/form-data"
-          className="flex items-center gap-4"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const form = e.currentTarget;
-            const formData = new FormData(form);
-            uploader.mutate({ data: formData });
-          }}
-        >
+      <div className="card w-96 bg-base-100 card-md shadow-sm">
+        <div className="card-body">
+          <h2 className="card-title">Uploads</h2>
+          <p>Upload Transactions from a JSON file.</p>
           <input
             type="file"
             name="json-file"
@@ -144,103 +135,127 @@ function Manage() {
             className="file-input file-input-bordered w-full max-w-xs"
             required
           />
-          <button type="submit" className="btn btn-primary">
-            Upload
-          </button>
-        </form>
-        {uploader.isPending && <div className="p-4">Uploading...</div>}
-        {uploader.isError && (
-          <div className="text-red-500 p-4">{uploader.error.message}</div>
-        )}
-        {uploader.isSuccess && (
-          <div className="text-green-500 p-4">
-            Successfully uploaded {uploader.data} transactions.
+          <div className="justify-end card-actions">
+            <form
+              method="post"
+              encType="multipart/form-data"
+              className="flex items-center gap-4"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const formData = new FormData(form);
+                uploader.mutate({ data: formData });
+              }}
+            >
+              <button type="submit" className="btn btn-primary">
+                Upload
+              </button>
+            </form>
+            {uploader.isPending && <div className="p-4">Uploading...</div>}
+            {uploader.isError && (
+              <div className="text-red-500 p-4">{uploader.error.message}</div>
+            )}
+            {uploader.isSuccess && (
+              <div className="text-green-500 p-4">
+                Successfully uploaded {uploader.data} transactions.
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
       {/* Download Txns as file */}
-      <div className="flex flex-row p-4 gap-4">
-        <h2 className="text-2xl mb-4">Download transactions as JSON</h2>
-        <label className="input">
-          <span className="label">From</span>
-          <input
-            type="date"
-            className="input"
-            value={downloadFrom}
-            onChange={(e) => setDownloadFrom(e.target.value)}
-          />
-        </label>
-        <label className="input">
-          <span className="label">To</span>
-          <input
-            type="date"
-            className="input"
-            value={downloadTo}
-            onChange={(e) => setDownloadTo(e.target.value)}
-          />
-        </label>
-        <button
-          className="btn btn-primary"
-          disabled={downloadDates.error}
-          onClick={async () => {
-            setDownloadError("");
-            if (downloadDates.error) {
-              return;
-            }
-            var resp: string;
-            try {
-              resp = await downloader({
-                data: { from: downloadDates.from, to: downloadDates.to },
-              });
-            } catch (error) {
-              setDownloadError(`Error downloading transactions: ${error}`);
-              return;
-            }
-            if (resp) {
-              const blob = new Blob([resp], { type: "application/json" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = "all.json";
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              URL.revokeObjectURL(url);
-            }
-          }}
-        >
-          Download
-        </button>
-        {downloadDates.error && (
-          <div className="text-red-500 p-4">{downloadDates.message}</div>
-        )}
-        {downloadError && (
-          <div className="text-red-500 p-4">{downloadError}</div>
-        )}
+      <div className="card w-96 bg-base-100 card-md shadow-sm">
+        <div className="card-body">
+          <h2 className="card-title">Download</h2>
+          <p>Download transactions as JSON.</p>
+          <div className="justify-end card-actions">
+            <label className="input">
+              <span className="label">From</span>
+              <input
+                type="date"
+                className="input"
+                value={downloadFrom}
+                onChange={(e) => setDownloadFrom(e.target.value)}
+              />
+            </label>
+            <label className="input">
+              <span className="label">To</span>
+              <input
+                type="date"
+                className="input"
+                value={downloadTo}
+                onChange={(e) => setDownloadTo(e.target.value)}
+              />
+            </label>
+            <button
+              className="btn btn-primary"
+              disabled={downloadDates.error}
+              onClick={async () => {
+                setDownloadError("");
+                if (downloadDates.error) {
+                  return;
+                }
+                var resp: string;
+                try {
+                  resp = await downloader({
+                    data: { from: downloadDates.from, to: downloadDates.to },
+                  });
+                } catch (error) {
+                  setDownloadError(`Error downloading transactions: ${error}`);
+                  return;
+                }
+                if (resp) {
+                  const blob = new Blob([resp], { type: "application/json" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "all.json";
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }
+              }}
+            >
+              Download
+            </button>
+            {downloadDates.error && (
+              <div className="text-red-500 p-4">{downloadDates.message}</div>
+            )}
+            {downloadError && (
+              <div className="text-red-500 p-4">{downloadError}</div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Delete All Txns */}
-      <div className="flex flex-row p-4 gap-4">
-        <h2 className="text-2xl mb-4">Delete All Transactions</h2>
-        <button
-          className="btn btn-error"
-          onClick={async () => {
-            await deleter.mutate({});
-          }}
-        >
-          Delete
-        </button>
-        {deleter.isPending && <div className="p-4">Uploading...</div>}
-        {deleter.isError && (
-          <div className="text-red-500 p-4">{deleter.error.message}</div>
-        )}
-        {deleter.isSuccess && (
-          <div className="text-green-500 p-4">
-            Successfully deleted {deleter.data} transactions.
+      <div className="card w-96 bg-base-100 card-md shadow-sm">
+        <div className="card-body">
+          <h2 className="card-title">Delete</h2>
+          <p>Delete all transactions</p>
+          <div className="justify-end card-actions">
+            <button
+              className="btn btn-error"
+              onClick={async () => {
+                await deleter.mutate({});
+              }}
+            >
+              Delete
+            </button>
+            {deleter.isPending && <div className="p-4">Uploading...</div>}
+            {deleter.isError && (
+              <div className="text-red-500 p-4">{deleter.error.message}</div>
+            )}
+            {deleter.isSuccess && (
+              <div className="text-green-500 p-4">
+                Successfully deleted {deleter.data} transactions.
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 
