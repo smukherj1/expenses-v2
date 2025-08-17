@@ -16,7 +16,6 @@ FROM base AS release
 COPY --from=install /temp/prod/node_modules node_modules
 COPY --from=builder /app/.output .output
 COPY --from=builder /app/package.json .
-ENV DB_FILE_NAME=file:data/local.db
 
 USER node
 EXPOSE 3000/tcp
