@@ -39,7 +39,7 @@
     "zod-validation-error": "^4.0.1"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build"
+    "dev": "bunx --bun vite",
+    "build": "bunx --bun vite build"
   }
 }

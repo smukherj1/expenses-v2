@@ -42,3 +42,7 @@ drizzle
 
 # Misc
 .env
+scripts
+.gitignore
+GEMINI.md
+README.md
