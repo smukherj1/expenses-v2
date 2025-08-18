@@ -30,6 +30,7 @@
     "daisyui": "^5.0.50",
     "dotenv": "^17.2.1",
     "drizzle-orm": "^0.44.4",
+    "http-status-codes": "^2.3.0",
     "lucide-react": "^0.539.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

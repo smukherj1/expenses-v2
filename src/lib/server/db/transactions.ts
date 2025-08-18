@@ -31,12 +31,12 @@ export async function UploadTxns(txns: Txn[]) {
   return result.rowsAffected;
 }
 
-interface TxnCursor {
+export interface TxnCursor {
   date: Date;
   id: number;
 }
 
-interface GetTxnsOpts {
+export interface GetTxnsOpts {
   from: Date;
   to: Date;
   pageSize: number;
@@ -49,7 +49,7 @@ const DefaultGetTxnOpts: GetTxnsOpts = {
   pageSize: 0, // No page limit.
 };
 
-interface TxnsResult {
+export interface TxnsResult {
   txns: Txn[];
   next?: TxnCursor;
 }
@@ -68,6 +68,9 @@ export async function GetTxns(
       `invalid pageSize given to GetTxns, got ${opts.pageSize}, want <= 0`
     );
   }
+  if (opts.pageSize > 1000) {
+    opts.pageSize = 1000;
+  }
   let q = db
     .select()
     .from(transactionsTable)
@@ -80,7 +83,7 @@ export async function GetTxns(
     .orderBy(asc(transactionsTable.date), asc(transactionsTable.id));
   const limit = opts.pageSize > 0 ? opts.pageSize + 1 : undefined;
   const result = await (limit ? q.limit(limit) : q);
-  const txs = result.map((t) => {
+  const txns = result.map((t) => {
     return {
       id: t.id,
       date: new Date(t.date),
@@ -91,19 +94,12 @@ export async function GetTxns(
     };
   });
   const next =
-    limit && txs.length === limit
+    limit && txns.length === limit
       ? {
-          date: txs.at(-1)!.date,
-          id: txs.at(-1)!.id,
+          date: txns.at(-1)!.date,
+          id: txns.at(-1)!.id,
         }
       : undefined;
-  const txns = txs.map((t) => ({
-    date: t.date,
-    description: t.description,
-    amount: t.amount,
-    institution: t.institution,
-    tag: t.tag,
-  }));
   return {
     txns,
     next,
