@@ -2,6 +2,7 @@ import { createServerFileRoute } from "@tanstack/react-start/server";
 import { z } from "zod/v4";
 import { GetTxns } from "@/lib/server/db/transactions";
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
+import { formatZodError } from "@/lib/utils";
 
 const GetSearchParamsSchema = z.object({
   from: z.coerce.date().optional().default(new Date(0)),
@@ -35,7 +36,6 @@ export const ServerRoute = createServerFileRoute("/api/transactions").methods({
     const pageSizeParam = Number(url.searchParams.get("pageSize"));
     if (!isNaN(pageSizeParam)) {
       searchParams.pageSize = pageSizeParam;
-      console.log(`Page Size=${searchParams.pageSize}`);
     }
 
     const nextDateParam = url.searchParams.get("next.date");
@@ -46,16 +46,15 @@ export const ServerRoute = createServerFileRoute("/api/transactions").methods({
         id: Number(nextIdParam),
       };
     }
-
-    const parsed = GetSearchParamsSchema.safeParse(searchParams);
+    const parsed = GetSearchParamsSchema.safeParse(searchParams, {
+      reportInput: true,
+    });
 
     if (!parsed.success) {
-      return new Response(
-        `${ReasonPhrases.BAD_REQUEST}: ${parsed.error.message}\n`,
-        {
-          status: StatusCodes.BAD_REQUEST,
-        }
-      );
+      const errorStr = parsed.error.message;
+      return new Response(`${ReasonPhrases.BAD_REQUEST}: ${errorStr}\n`, {
+        status: StatusCodes.BAD_REQUEST,
+      });
     }
 
     const txns = await GetTxns(parsed.data);

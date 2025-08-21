@@ -5,7 +5,7 @@ import { and, asc, gte, lte } from "drizzle-orm";
 
 export const TxnSchema = z.object({
   date: z.date(),
-  description: z.string().max(256),
+  description: z.string().max(200),
   amount: z
     .string()
     .max(10)
@@ -83,7 +83,7 @@ export async function GetTxns(
     .orderBy(asc(transactionsTable.date), asc(transactionsTable.id));
   const limit = opts.pageSize > 0 ? opts.pageSize + 1 : undefined;
   const result = await (limit ? q.limit(limit) : q);
-  const txns = result.map((t) => {
+  const fetched_txns = result.map((t) => {
     return {
       id: t.id,
       date: new Date(t.date),
@@ -94,12 +94,16 @@ export async function GetTxns(
     };
   });
   const next =
-    limit && txns.length === limit
+    limit && fetched_txns.length === limit
       ? {
-          date: txns.at(-1)!.date,
-          id: txns.at(-1)!.id,
+          date: fetched_txns.at(-1)!.date,
+          id: fetched_txns.at(-1)!.id,
         }
       : undefined;
+  const txns =
+    limit && fetched_txns.length === limit
+      ? fetched_txns.slice(0, limit - 1)
+      : fetched_txns;
   return {
     txns,
     next,

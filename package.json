@@ -36,8 +36,7 @@
     "react-dom": "^19.1.1",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.11",
-    "vite": "^7.1.1",
-    "zod-validation-error": "^4.0.1"
+    "vite": "^7.1.1"
   },
   "scripts": {
     "dev": "bunx --bun vite",
