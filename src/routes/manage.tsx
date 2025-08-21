@@ -10,8 +10,6 @@ import { z } from "zod/v4";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { formatZodError } from "@/lib/utils";
-import { setResponseStatus } from "@tanstack/react-start/server";
-import { StatusCodes, ReasonPhrases } from "http-status-codes";
 
 const txnsSchema = z.array(TxnSchema);
 
@@ -42,7 +40,7 @@ const uploadTxns = createServerFn({
         return value;
       });
     } catch (error) {
-      throw new Error(`Received invalid JSON file: ${error}`);
+      throw new Error(`invalid JSON file: ${error}`);
     }
     const result = txnsSchema.safeParse(json, { reportInput: true });
     if (!result.success) {

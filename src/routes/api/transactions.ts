@@ -5,18 +5,16 @@ import { StatusCodes, ReasonPhrases } from "http-status-codes";
 import { formatZodError } from "@/lib/utils";
 
 const GetSearchParamsSchema = z.object({
-  from: z.coerce.date().optional().default(new Date(0)),
-  to: z.coerce.date().optional().default(new Date()),
+  from: z.date().optional().default(new Date(0)),
+  to: z.date().optional().default(new Date()),
   pageSize: z.number().optional().default(0),
   next: z
     .object({
-      date: z.coerce.date(),
+      date: z.date(),
       id: z.number(),
     })
     .optional(),
 });
-
-type GetSearchParams = z.infer<typeof GetSearchParamsSchema>;
 
 export const ServerRoute = createServerFileRoute("/api/transactions").methods({
   GET: async ({ request }) => {
@@ -51,7 +49,7 @@ export const ServerRoute = createServerFileRoute("/api/transactions").methods({
     });
 
     if (!parsed.success) {
-      const errorStr = parsed.error.message;
+      const errorStr = formatZodError(parsed.error);
       return new Response(`${ReasonPhrases.BAD_REQUEST}: ${errorStr}\n`, {
         status: StatusCodes.BAD_REQUEST,
       });
