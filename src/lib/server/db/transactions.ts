@@ -82,7 +82,8 @@ export async function GetTxns(
     )
     .orderBy(asc(transactionsTable.date), asc(transactionsTable.id));
   const limit = opts.pageSize > 0 ? opts.pageSize + 1 : undefined;
-  const result = await (limit ? q.limit(limit) : q);
+  const qWithLimit = limit ? q.limit(limit) : q;
+  const result = await qWithLimit;
   const fetched_txns = result.map((t) => {
     return {
       id: t.id,

@@ -1,61 +1,93 @@
 import { createServerFileRoute } from "@tanstack/react-start/server";
-import { z } from "zod/v4";
 import { GetTxns } from "@/lib/server/db/transactions";
-import { StatusCodes, ReasonPhrases } from "http-status-codes";
-import { formatZodError } from "@/lib/utils";
+import { StatusCodes, ReasonPhrases, getReasonPhrase } from "http-status-codes";
 
-const GetSearchParamsSchema = z.object({
-  from: z.date().optional().default(new Date(0)),
-  to: z.date().optional().default(new Date()),
-  pageSize: z.number().optional().default(0),
-  next: z
-    .object({
-      date: z.date(),
-      id: z.number(),
-    })
-    .optional(),
-});
+function mustDateOrThrow(value: string, param: string): Date {
+  const d = new Date(value);
+  if (isNaN(d.getTime())) {
+    throw new Error(
+      `invalid value '${value}' for param '${param}', expected valid date`
+    );
+  }
+  return d;
+}
+
+function dateOrThrow(
+  value: string | null,
+  param: string,
+  fallback: Date
+): Date {
+  if (!value) {
+    return fallback;
+  }
+  return mustDateOrThrow(value, param);
+}
+
+function mustNumberOrThrow(value: string, param: string): number {
+  const n = Number(value);
+  if (isNaN(n)) {
+    throw new Error(
+      `invalid value '${value}' for param '${param}, expected valid number`
+    );
+  }
+  return n;
+}
+
+function numberOrThrow(
+  value: string | null,
+  param: string,
+  fallback: number
+): number {
+  if (!value) {
+    return fallback;
+  }
+  return mustNumberOrThrow(value, param);
+}
+
+interface GetNext {
+  date: Date;
+  id: number;
+}
+
+interface GetSearchParams {
+  from: Date;
+  to: Date;
+  pageSize: number;
+  next?: GetNext;
+}
+
+function parseGETSearchParams(params: URLSearchParams): GetSearchParams {
+  const nextID = params.get("next.id");
+  const nextDate = params.get("next.date");
+  const next =
+    nextID && nextDate
+      ? {
+          date: mustDateOrThrow(nextDate, "next.date"),
+          id: mustNumberOrThrow(nextID, "next.id"),
+        }
+      : undefined;
+  return {
+    from: dateOrThrow(params.get("from"), "from", new Date(0)),
+    to: dateOrThrow(params.get("to"), "to", new Date()),
+    pageSize: numberOrThrow(params.get("pageSize"), "pageSize", 0),
+    next: next,
+  };
+}
 
 export const ServerRoute = createServerFileRoute("/api/transactions").methods({
   GET: async ({ request }) => {
     const url = new URL(request.url);
-    const searchParams: Record<string, any> = {};
 
-    const fromParam = url.searchParams.get("from");
-    if (fromParam) {
-      searchParams.from = fromParam;
-    }
+    var params: GetSearchParams;
 
-    const toParam = url.searchParams.get("to");
-    if (toParam) {
-      searchParams.to = toParam;
-    }
-
-    const pageSizeParam = Number(url.searchParams.get("pageSize"));
-    if (!isNaN(pageSizeParam)) {
-      searchParams.pageSize = pageSizeParam;
-    }
-
-    const nextDateParam = url.searchParams.get("next.date");
-    const nextIdParam = url.searchParams.get("next.id");
-    if (nextDateParam && nextIdParam) {
-      searchParams.next = {
-        date: nextDateParam,
-        id: Number(nextIdParam),
-      };
-    }
-    const parsed = GetSearchParamsSchema.safeParse(searchParams, {
-      reportInput: true,
-    });
-
-    if (!parsed.success) {
-      const errorStr = formatZodError(parsed.error);
-      return new Response(`${ReasonPhrases.BAD_REQUEST}: ${errorStr}\n`, {
+    try {
+      params = parseGETSearchParams(url.searchParams);
+    } catch (error) {
+      return new Response(`${ReasonPhrases.BAD_REQUEST}: ${error}`, {
         status: StatusCodes.BAD_REQUEST,
       });
     }
-
-    const txns = await GetTxns(parsed.data);
+    const txns = await GetTxns(params);
 
     return new Response(JSON.stringify(txns, null, 2));
   },
