@@ -77,7 +77,11 @@ export async function GetTxns(
     .where(
       and(
         gte(transactionsTable.date, opts.from.getTime()),
-        lte(transactionsTable.date, opts.to.getTime())
+        lte(transactionsTable.date, opts.to.getTime()),
+        opts.next ? gte(transactionsTable.id, opts.next.id) : undefined,
+        opts.next
+          ? gte(transactionsTable.date, opts.next.date.getTime())
+          : undefined
       )
     )
     .orderBy(asc(transactionsTable.date), asc(transactionsTable.id));
