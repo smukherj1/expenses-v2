@@ -94,7 +94,6 @@ export const ServerRoute = createServerFileRoute("/api/transactions").methods({
         let firstChunk = true;
 
         controller.enqueue("[");
-        let iter = 0;
 
         try {
           while (true) {
@@ -112,9 +111,6 @@ export const ServerRoute = createServerFileRoute("/api/transactions").methods({
 
             if (result.next) {
               next = result.next;
-            } else if (iter < 1000) {
-              iter++;
-              next = undefined;
             } else {
               break;
             }
