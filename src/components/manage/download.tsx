@@ -52,9 +52,6 @@ export default function Component() {
     from: downloadFrom,
     to: downloadTo,
   });
-  const [downloadError, setDownloadError] = useState("");
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState(0);
 
   return (
     <div className="card w-96 md:w-240 bg-base-100 card-md shadow-sm">
@@ -82,64 +79,28 @@ export default function Component() {
           </label>
           <button
             className="btn btn-primary"
-            disabled={downloadDates.error || isDownloading}
+            disabled={downloadDates.error}
             onClick={async () => {
-              setDownloadError("");
               if (downloadDates.error) {
                 return;
               }
-              setIsDownloading(true);
-              setDownloadProgress(0);
-              try {
-                const params = new URLSearchParams({
-                  from: downloadDates.from.toISOString(),
-                  to: downloadDates.to.toISOString(),
-                });
-                const response = await fetch(`/api/transactions?${params}`);
-
-                if (!response.ok || !response.body) {
-                  throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const reader = response.body.getReader();
-                const chunks = [];
-                let receivedLength = 0;
-                while (true) {
-                  const { done, value } = await reader.read();
-                  if (done) {
-                    break;
-                  }
-                  chunks.push(value);
-                  receivedLength += value.length;
-                  setDownloadProgress(receivedLength);
-                }
-
-                const blob = new Blob(chunks, { type: "application/json" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "transactions.json";
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-              } catch (error) {
-                setDownloadError(`Error downloading transactions: ${error instanceof Error ? error.message : String(error)}`);
-              } finally {
-                setIsDownloading(false);
-              }
+              const params = new URLSearchParams({
+                from: downloadDates.from.toISOString(),
+                to: downloadDates.to.toISOString(),
+              });
+              const a = document.createElement("a");
+              a.href = `/api/transactions?${params}`;
+              a.download = "transactions.json";
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
             }}
           >
-            {isDownloading ? "Downloading..." : "Download"}
+            Download
           </button>
-          {isDownloading && (
-            <div className="p-4">Downloaded {downloadProgress} bytes.</div>
-          )}
+          <a></a>
           {downloadDates.error && (
             <div className="text-red-500 p-4">{downloadDates.message}</div>
-          )}
-          {downloadError && (
-            <div className="text-red-500 p-4">{downloadError}</div>
           )}
         </div>
       </div>

@@ -68,9 +68,6 @@ export async function GetTxns(
       `invalid pageSize given to GetTxns, got ${opts.pageSize}, want <= 0`
     );
   }
-  if (opts.pageSize > 1000) {
-    opts.pageSize = 1000;
-  }
   let q = db
     .select()
     .from(transactionsTable)

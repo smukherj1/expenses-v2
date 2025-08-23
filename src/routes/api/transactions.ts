@@ -1,16 +1,6 @@
 import { createServerFileRoute } from "@tanstack/react-start/server";
-import { GetTxns, GetTxnsOpts } from "@/lib/server/db/transactions";
+import { GetTxns, GetTxnsOpts, TxnCursor } from "@/lib/server/db/transactions";
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
-
-function mustDateOrThrow(value: string, param: string): Date {
-  const d = new Date(value);
-  if (isNaN(d.getTime())) {
-    throw new Error(
-      `invalid value '${value}' for param '${param}', expected valid date`
-    );
-  }
-  return d;
-}
 
 function dateOrThrow(
   value: string | null,
@@ -20,28 +10,13 @@ function dateOrThrow(
   if (!value) {
     return fallback;
   }
-  return mustDateOrThrow(value, param);
-}
-
-function mustNumberOrThrow(value: string, param: string): number {
-  const n = Number(value);
-  if (isNaN(n)) {
+  const d = new Date(value);
+  if (isNaN(d.getTime())) {
     throw new Error(
-      `invalid value '${value}' for param '${param}, expected valid number`
+      `invalid value '${value}' for param '${param}', expected valid date`
     );
   }
-  return n;
-}
-
-function numberOrThrow(
-  value: string | null,
-  param: string,
-  fallback: number
-): number {
-  if (!value) {
-    return fallback;
-  }
-  return mustNumberOrThrow(value, param);
+  return d;
 }
 
 interface GetNext {
@@ -52,25 +27,12 @@ interface GetNext {
 interface GetSearchParams {
   from: Date;
   to: Date;
-  pageSize: number;
-  next?: GetNext;
 }
 
 function parseGETSearchParams(params: URLSearchParams): GetSearchParams {
-  const nextID = params.get("next.id");
-  const nextDate = params.get("next.date");
-  const next =
-    nextID && nextDate
-      ? {
-          date: mustDateOrThrow(nextDate, "next.date"),
-          id: mustNumberOrThrow(nextID, "next.id"),
-        }
-      : undefined;
   return {
     from: dateOrThrow(params.get("from"), "from", new Date(0)),
     to: dateOrThrow(params.get("to"), "to", new Date()),
-    pageSize: numberOrThrow(params.get("pageSize"), "pageSize", 0),
-    next: next,
   };
 }
 
@@ -78,7 +40,7 @@ export const ServerRoute = createServerFileRoute("/api/transactions").methods({
   GET: async ({ request }) => {
     const url = new URL(request.url);
 
-    var params: GetTxnsOpts;
+    var params: GetSearchParams;
 
     try {
       params = parseGETSearchParams(url.searchParams);
@@ -90,14 +52,15 @@ export const ServerRoute = createServerFileRoute("/api/transactions").methods({
 
     const stream = new ReadableStream({
       async start(controller) {
-        let next = params.next;
+        let next: TxnCursor | undefined = undefined;
         let firstChunk = true;
 
         controller.enqueue("[");
 
         try {
           while (true) {
-            const result = await GetTxns({ ...params, pageSize: 1000, next });
+            const pageSize = 2000;
+            const result = await GetTxns({ ...params, pageSize, next });
 
             if (result.txns.length > 0) {
               if (!firstChunk) {
