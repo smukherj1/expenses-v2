@@ -1,6 +1,5 @@
 import {
   DeleteTxns,
-  GetTxns,
   TxnSchema,
   UploadTxns,
 } from "@/lib/server/db/transactions";
@@ -59,35 +58,6 @@ const uploadTxns = createServerFn({
     return uploaded;
   });
 
-const downloadTxnsReqSchema = z.object({
-  from: z.date(),
-  to: z.date(),
-});
-
-const downloadTxns = createServerFn({
-  method: "GET",
-})
-  .validator((req: unknown) => {
-    return downloadTxnsReqSchema.parse(req);
-  })
-  .handler(async (ctx) => {
-    const result = await GetTxns({ from: ctx.data.from, to: ctx.data.to });
-    return JSON.stringify(
-      result.txns,
-      (key, value) => {
-        if (key === "date" && typeof value === "string") {
-          const date = new Date(value);
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, "0");
-          const day = String(date.getDate()).padStart(2, "0");
-          return `${year}-${month}-${day}`;
-        }
-        return value;
-      },
-      2
-    );
-  });
-
 const deleteTxns = createServerFn({
   method: "POST",
 }).handler(async () => {
@@ -109,8 +79,9 @@ function Manage() {
     from: downloadFrom,
     to: downloadTo,
   });
-  const downloader = useServerFn(downloadTxns);
   const [downloadError, setDownloadError] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
 
   return (
     <div className="flex flex-col items-center justify-center h-full gap-4">
@@ -180,36 +151,59 @@ function Manage() {
             </label>
             <button
               className="btn btn-primary"
-              disabled={downloadDates.error}
+              disabled={downloadDates.error || isDownloading}
               onClick={async () => {
                 setDownloadError("");
                 if (downloadDates.error) {
                   return;
                 }
-                var resp: string;
+                setIsDownloading(true);
+                setDownloadProgress(0);
                 try {
-                  resp = await downloader({
-                    data: { from: downloadDates.from, to: downloadDates.to },
+                  const params = new URLSearchParams({
+                    from: downloadDates.from.toISOString(),
+                    to: downloadDates.to.toISOString(),
                   });
-                } catch (error) {
-                  setDownloadError(`Error downloading transactions: ${error}`);
-                  return;
-                }
-                if (resp) {
-                  const blob = new Blob([resp], { type: "application/json" });
+                  const response = await fetch(`/api/transactions?${params}`);
+
+                  if (!response.ok || !response.body) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                  }
+
+                  const reader = response.body.getReader();
+                  const chunks = [];
+                  let receivedLength = 0;
+                  while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) {
+                      break;
+                    }
+                    chunks.push(value);
+                    receivedLength += value.length;
+                    setDownloadProgress(receivedLength);
+                  }
+
+                  const blob = new Blob(chunks, { type: "application/json" });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement("a");
                   a.href = url;
-                  a.download = "all.json";
+                  a.download = "transactions.json";
                   document.body.appendChild(a);
                   a.click();
                   document.body.removeChild(a);
                   URL.revokeObjectURL(url);
+                } catch (error) {
+                  setDownloadError(`Error downloading transactions: ${error}`);
+                } finally {
+                  setIsDownloading(false);
                 }
               }}
             >
-              Download
+              {isDownloading ? "Downloading..." : "Download"}
             </button>
+            {isDownloading && (
+              <div className="p-4">Downloaded {downloadProgress} bytes.</div>
+            )}
             {downloadDates.error && (
               <div className="text-red-500 p-4">{downloadDates.message}</div>
             )}

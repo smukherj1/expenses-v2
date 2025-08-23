@@ -1,6 +1,6 @@
 import { createServerFileRoute } from "@tanstack/react-start/server";
-import { GetTxns } from "@/lib/server/db/transactions";
-import { StatusCodes, ReasonPhrases, getReasonPhrase } from "http-status-codes";
+import { GetTxns, GetTxnsOpts } from "@/lib/server/db/transactions";
+import { StatusCodes, ReasonPhrases } from "http-status-codes";
 
 function mustDateOrThrow(value: string, param: string): Date {
   const d = new Date(value);
@@ -78,7 +78,7 @@ export const ServerRoute = createServerFileRoute("/api/transactions").methods({
   GET: async ({ request }) => {
     const url = new URL(request.url);
 
-    var params: GetSearchParams;
+    var params: GetTxnsOpts;
 
     try {
       params = parseGETSearchParams(url.searchParams);
@@ -87,8 +87,48 @@ export const ServerRoute = createServerFileRoute("/api/transactions").methods({
         status: StatusCodes.BAD_REQUEST,
       });
     }
-    const txns = await GetTxns(params);
 
-    return new Response(JSON.stringify(txns, null, 2));
+    const stream = new ReadableStream({
+      async start(controller) {
+        let next = params.next;
+        let firstChunk = true;
+
+        controller.enqueue("[");
+        let iter = 0;
+
+        try {
+          while (true) {
+            const result = await GetTxns({ ...params, pageSize: 1000, next });
+
+            if (result.txns.length > 0) {
+              if (!firstChunk) {
+                controller.enqueue(",\n");
+              }
+              controller.enqueue(
+                result.txns.map((t) => JSON.stringify(t)).join(",\n")
+              );
+              firstChunk = false;
+            }
+
+            if (result.next) {
+              next = result.next;
+            } else if (iter < 1000) {
+              iter++;
+              next = undefined;
+            } else {
+              break;
+            }
+          }
+          controller.enqueue("]");
+          controller.close();
+        } catch (error) {
+          controller.error(error);
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: { "Content-Type": "application/json" },
+    });
   },
 });
