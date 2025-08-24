@@ -1,5 +1,12 @@
 import { Link } from "@tanstack/react-router";
 
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuList,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
+
 interface linkData {
   to: string;
   name: string;
@@ -12,27 +19,27 @@ export default function Navbar() {
     { to: "/manage", name: "Manage" },
   ];
   return (
-    <div className="navbar bg-base-100 shadow-sm">
-      <div className="flex-1">
-        <span className="btn btn-ghost text-xl">Expenses Tracker</span>
-      </div>
-      <div className="flex-none">
-        <ul className="menu menu-horizontal px-1">
+    <div className="p-2 flex items-center justify-between shadow-sm border-b">
+      <Link to="/" className="font-bold text-xl p-2">
+        Expenses Tracker
+      </Link>
+      <NavigationMenu>
+        <NavigationMenuList>
           {links.map(({ to, name }) => {
             return (
-              <li key={name}>
+              <NavigationMenuItem key={name}>
                 <Link
                   to={to}
-                  className="font-bold"
+                  className={`${navigationMenuTriggerStyle()} font-bold`}
                   activeProps={{ className: "text-blue-400" }}
                 >
                   {name}
                 </Link>
-              </li>
+              </NavigationMenuItem>
             );
           })}
-        </ul>
-      </div>
+        </NavigationMenuList>
+      </NavigationMenu>
     </div>
   );
 }
