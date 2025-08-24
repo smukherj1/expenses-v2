@@ -39,6 +39,7 @@ export default function Component() {
         </div>
         <Button
           variant="destructive"
+          className="w-28"
           onClick={async () => {
             await deleter.mutate({});
           }}

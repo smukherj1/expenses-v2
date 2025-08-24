@@ -107,7 +107,9 @@ export default function Component() {
               </div>
             )}
           </div>
-          <Button type="submit">Upload</Button>
+          <Button type="submit" className="w-28">
+            Upload
+          </Button>
         </CardFooter>
       </form>
     </Card>

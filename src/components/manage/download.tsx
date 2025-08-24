@@ -55,6 +55,7 @@ export default function Component() {
       </CardContent>
       <CardFooter className="justify-end">
         <Button
+          className="w-28"
           disabled={validation.error}
           onClick={async () => {
             if (validation.error || !from || !to) {
