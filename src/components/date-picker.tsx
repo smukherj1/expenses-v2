@@ -5,7 +5,6 @@ import { ChevronDownIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
@@ -13,11 +12,12 @@ import {
 } from "@/components/ui/popover";
 
 export interface DatePickerProps {
+  id?: string;
   date: Date | undefined;
   setDate: (d: Date | undefined) => void;
 }
 
-export default function DatePicker({ date, setDate }: DatePickerProps) {
+export default function DatePicker({ id, date, setDate }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
 
   return (
@@ -25,7 +25,7 @@ export default function DatePicker({ date, setDate }: DatePickerProps) {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          id="date"
+          id={id}
           className="w-48 justify-between font-normal"
         >
           {date ? date.toLocaleDateString() : "Select date"}
