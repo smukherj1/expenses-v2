@@ -20,10 +20,12 @@ export default function Component() {
   const deleter = useMutation({ mutationFn: useServerFn(deleteTxns) });
 
   return (
-    <Card className="w-96 md:w-240">
+    <Card className="w-96 md:w-240 border-destructive/50 dark:border-destructive bg-destructive/5 dark:bg-destructive/10">
       <CardHeader>
-        <CardTitle>Delete</CardTitle>
-        <CardDescription>Delete all transactions.</CardDescription>
+        <CardTitle className="text-destructive">Delete</CardTitle>
+        <CardDescription className="text-destructive/80">
+          Delete all transactions.
+        </CardDescription>
       </CardHeader>
       <CardFooter className="justify-between">
         <div>
