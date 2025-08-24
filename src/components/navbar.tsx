@@ -24,7 +24,7 @@ export default function Navbar() {
                 <Link
                   to={to}
                   className="font-bold"
-                  activeProps={{ className: "text-rose-500" }}
+                  activeProps={{ className: "text-blue-400" }}
                 >
                   {name}
                 </Link>
