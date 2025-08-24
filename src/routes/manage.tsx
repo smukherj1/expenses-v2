@@ -9,7 +9,7 @@ export const Route = createFileRoute("/manage")({
 
 function Manage() {
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-4">
+    <div className="flex flex-col items-center justify-center h-full gap-4 m-4">
       {/* Upload Txns from file */}
       <UploadComponent />
       {/* Download Txns as file */}
