@@ -3,6 +3,16 @@ import { formatZodError } from "@/lib/zodutils";
 import { useMutation } from "@tanstack/react-query";
 import { createServerFn, useServerFn } from "@tanstack/react-start";
 import { z } from "zod/v4";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 const txnsSchema = z.array(TxnSchema);
 
@@ -58,32 +68,35 @@ export default function Component() {
   });
 
   return (
-    <div className="card w-96 md:w-240 bg-base-100 card-md shadow-sm">
+    <Card className="w-96 md:w-240">
       <form
         method="post"
         encType="multipart/form-data"
-        className="flex items-center gap-4"
         onSubmit={async (e) => {
           e.preventDefault();
           const form = e.currentTarget;
           const formData = new FormData(form);
           uploader.mutate({ data: formData });
         }}
+        className="flex flex-col gap-y-4"
       >
-        <div className="card-body">
-          <h2 className="card-title">Uploads</h2>
-          <p>Upload Transactions from a JSON file.</p>
-          <input
+        <CardHeader>
+          <CardTitle>Uploads</CardTitle>
+          <CardDescription>
+            Upload Transactions from a JSON file.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Input
+            id="json-file"
             type="file"
             name="json-file"
             accept=".json"
-            className="file-input file-input-bordered w-full max-w-xs"
             required
           />
-          <div className="justify-end card-actions">
-            <button type="submit" className="btn btn-primary">
-              Upload
-            </button>
+        </CardContent>
+        <CardFooter className="justify-between">
+          <div>
             {uploader.isPending && <div className="p-4">Uploading...</div>}
             {uploader.isError && (
               <div className="text-red-500 p-4">{uploader.error.message}</div>
@@ -94,8 +107,9 @@ export default function Component() {
               </div>
             )}
           </div>
-        </div>
+          <Button type="submit">Upload</Button>
+        </CardFooter>
       </form>
-    </div>
+    </Card>
   );
 }

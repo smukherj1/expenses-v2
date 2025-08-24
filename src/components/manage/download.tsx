@@ -53,7 +53,7 @@ export default function Component() {
           )}
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="justify-end">
         <Button
           disabled={validation.error}
           onClick={async () => {
