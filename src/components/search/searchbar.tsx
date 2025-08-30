@@ -1,7 +1,4 @@
 import * as React from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { z } from "zod";
-
 import DatePicker from "@/components/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,65 +10,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Route } from "@/routes/search";
+import {
+  GetTxnsOpts,
+  GetTxnsSearchParams,
+  GetTxnsSearchParamsToOpts,
+  StrOp,
+  strOps,
+  NumOp,
+  numOps,
+} from "@/lib/server/db/transactions";
 
-const opInc = "~";
-const opExc = "!~";
-const opGte = ">=";
-const opLte = "<=";
-const opEq = "==";
-const opNeq = "!=";
+export type Props = {
+  txnSearchParams: GetTxnsSearchParams;
+  onSearch: (opts: Partial<GetTxnsOpts>) => void;
+};
 
-const strOps = [opInc, opExc] as const;
-const numOps = [opGte, opLte, opEq, opNeq] as const;
+export default function SearchBar({ txnSearchParams, onSearch }: Props) {
+  const sopts = GetTxnsSearchParamsToOpts(txnSearchParams);
 
-type StrOp = (typeof strOps)[number];
-type NumOp = (typeof numOps)[number];
-
-const txnsSearchParamsSchema = z.object({
-  from: z.string().optional().catch(undefined),
-  to: z.string().optional().catch(undefined),
-  desc: z.string().optional().catch(undefined),
-  descOp: z.enum(strOps).optional().catch(undefined),
-  amount: z.coerce.number().optional().catch(undefined),
-  amountOp: z.enum(numOps).optional().catch(undefined),
-});
-
-type TxnSearchParams = z.infer<typeof txnsSearchParamsSchema>;
-
-export default function SearchBar() {
-  const navigate = useNavigate({ from: Route.fullPath });
-  const searchParams = Route.useSearch();
-
-  const [from, setFrom] = React.useState<Date | undefined>(
-    searchParams.from ? new Date(searchParams.from) : undefined
-  );
-  const [to, setTo] = React.useState<Date | undefined>(
-    searchParams.to ? new Date(search_params.to) : undefined
-  );
-  const [desc, setDesc] = React.useState(searchParams.desc ?? "");
-  const [descOp, setDescOp] = React.useState<StrOp>(
-    searchParams.descOp ?? opInc
-  );
-  const [amount, setAmount] = React.useState(searchParams.amount ?? "");
-  const [amountOp, setAmountOp] = React.useState<NumOp>(
-    searchParams.amountOp ?? opEq
-  );
+  const [from, setFrom] = React.useState(sopts.from);
+  const [to, setTo] = React.useState(sopts.to);
+  const [desc, setDesc] = React.useState(sopts.desc);
+  const [descOp, setDescOp] = React.useState(sopts.descOp);
+  const [amount, setAmount] = React.useState(sopts.amount);
+  const [amountOp, setAmountOp] = React.useState(sopts.amountOp);
+  const [inst, setInst] = React.useState(sopts.inst);
+  const [instOp, setInstOp] = React.useState(sopts.instOp);
 
   const handleSearch = () => {
-    const params: TxnSearchParams = {};
-    if (from) params.from = from.toISOString().split("T")[0];
-    if (to) params.to = to.toISOString().split("T")[0];
-    if (desc) params.desc = desc;
-    if (descOp) params.descOp = descOp;
-    if (amount) params.amount = Number(amount);
-    if (amountOp) params.amountOp = amountOp;
-
-    navigate({
-      to: "/search",
-      search: params,
-      replace: true,
-    });
+    onSearch({ from, to, desc, descOp, amount, amountOp, inst, instOp });
   };
 
   return (
@@ -101,7 +68,7 @@ export default function SearchBar() {
           </Select>
           <Input
             id="desc"
-            value={desc}
+            value={desc ?? ""}
             onChange={(e) => setDesc(e.target.value)}
             className="rounded-l-none"
           />
@@ -128,8 +95,34 @@ export default function SearchBar() {
           <Input
             id="amount"
             type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            value={amount ?? ""}
+            onChange={(e) => {
+              const num = parseFloat(e.target.value);
+              setAmount(isNaN(num) ? undefined : num);
+            }}
+            className="rounded-l-none"
+          />
+        </div>
+      </div>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="inst">Institution</Label>
+        <div className="flex">
+          <Select value={instOp} onValueChange={(v) => setInstOp(v as StrOp)}>
+            <SelectTrigger className="w-24 rounded-r-none">
+              <SelectValue placeholder="Op" />
+            </SelectTrigger>
+            <SelectContent>
+              {strOps.map((op) => (
+                <SelectItem key={op} value={op}>
+                  {op}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            id="inst"
+            value={inst ?? ""}
+            onChange={(e) => setInst(e.target.value)}
             className="rounded-l-none"
           />
         </div>

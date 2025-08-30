@@ -31,6 +31,34 @@ export async function UploadTxns(txns: Txn[]) {
   return result.rowsAffected;
 }
 
+const GetTxnsSearchParamsSchema = z.object({
+  from: z.string().optional(),
+  to: z.string().optional(),
+  desc: z.string().optional(),
+  descOp: z.string().optional(),
+  amount: z.string().optional(),
+  amountOp: z.string().optional(),
+  inst: z.string().optional(),
+  instOp: z.string().optional(),
+  nextDate: z.string().optional(),
+  nextID: z.string().optional(),
+});
+
+export type GetTxnsSearchParams = z.infer<typeof GetTxnsSearchParamsSchema>;
+
+export const opInc = "~";
+export const opExc = "!~";
+export const opGte = ">=";
+export const opLte = "<=";
+export const opEq = "==";
+export const opNeq = "!=";
+
+export const strOps = [opInc, opExc] as const;
+export const numOps = [opGte, opLte, opEq, opNeq] as const;
+
+export type StrOp = (typeof strOps)[number];
+export type NumOp = (typeof numOps)[number];
+
 export interface TxnCursor {
   date: Date;
   id: number;
@@ -39,6 +67,12 @@ export interface TxnCursor {
 export interface GetTxnsOpts {
   from: Date;
   to: Date;
+  desc: string;
+  descOp: StrOp;
+  amount: number;
+  amountOp: NumOp;
+  inst: string;
+  instOp: StrOp;
   pageSize: number;
   next?: TxnCursor;
 }
@@ -46,6 +80,12 @@ export interface GetTxnsOpts {
 const DefaultGetTxnOpts: GetTxnsOpts = {
   from: new Date(0),
   to: new Date(),
+  desc: "",
+  descOp: opInc,
+  amount: 0,
+  amountOp: opGte,
+  inst: "",
+  instOp: opInc,
   pageSize: 0, // No page limit.
 };
 
@@ -54,12 +94,77 @@ export interface TxnsResult {
   next?: TxnCursor;
 }
 
+export function GetTxnsSearchParamsToOpts(
+  sp: GetTxnsSearchParams
+): Partial<GetTxnsOpts> {
+  const opts: Partial<GetTxnsOpts> = {};
+
+  if (sp.from) {
+    const d = new Date(sp.from);
+    if (!isNaN(d.getTime())) {
+      opts.from = d;
+    }
+  }
+
+  if (sp.to) {
+    const d = new Date(sp.to);
+    if (!isNaN(d.getTime())) {
+      opts.to = d;
+    }
+  }
+
+  if (sp.desc) {
+    opts.desc = sp.desc;
+  }
+
+  if (sp.descOp && (strOps as readonly string[]).includes(sp.descOp)) {
+    opts.descOp = sp.descOp as StrOp;
+  }
+
+  if (sp.amount && typeof sp.amount === "string") {
+    const amount = parseFloat(sp.amount);
+    if (!isNaN(amount)) {
+      opts.amount = amount;
+    }
+  } else if (typeof sp.amount === "number") {
+    opts.amount = sp.amount;
+  }
+
+  if (sp.amountOp && (numOps as readonly string[]).includes(sp.amountOp)) {
+    opts.amountOp = sp.amountOp as NumOp;
+  }
+
+  if (sp.inst) {
+    opts.inst = sp.inst;
+  }
+
+  if (sp.instOp && (strOps as readonly string[]).includes(sp.instOp)) {
+    opts.instOp = sp.instOp as StrOp;
+  }
+
+  if (sp.nextDate && sp.nextID) {
+    const id = parseInt(sp.nextID, 10);
+    const date = new Date(sp.nextDate);
+    if (!isNaN(id) && !isNaN(date.getTime())) {
+      opts.next = { date, id };
+    }
+  }
+
+  return opts;
+}
+
 export async function GetTxns(
   popts: Partial<GetTxnsOpts>
 ): Promise<TxnsResult> {
   const opts: GetTxnsOpts = {
     from: popts.from || DefaultGetTxnOpts.from,
     to: popts.to || DefaultGetTxnOpts.to,
+    desc: popts.desc || DefaultGetTxnOpts.desc,
+    descOp: popts.descOp || DefaultGetTxnOpts.descOp,
+    amount: popts.amount || DefaultGetTxnOpts.amount,
+    amountOp: popts.amountOp || DefaultGetTxnOpts.amountOp,
+    inst: popts.inst || DefaultGetTxnOpts.inst,
+    instOp: popts.instOp || DefaultGetTxnOpts.instOp,
     pageSize: popts.pageSize || DefaultGetTxnOpts.pageSize,
     next: popts.next || DefaultGetTxnOpts.next,
   };
