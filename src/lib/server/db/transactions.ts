@@ -31,7 +31,7 @@ export async function UploadTxns(txns: Txn[]) {
   return result.rowsAffected;
 }
 
-const GetTxnsSearchParamsSchema = z.object({
+export const GetTxnsSearchParamsSchema = z.object({
   from: z.string().optional(),
   to: z.string().optional(),
   desc: z.string().optional(),
