@@ -1,5 +1,6 @@
 import { createServerFileRoute } from "@tanstack/react-start/server";
-import { GetTxns, TxnCursor } from "@/lib/server/db/transactions";
+import { GetTxns } from "@/lib/server/db/transactions";
+import { TxnCursor } from "@/lib/transactions";
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
 
 function dateOrThrow(

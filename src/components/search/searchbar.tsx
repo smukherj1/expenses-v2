@@ -18,15 +18,7 @@ import {
   strOps,
   NumOp,
   numOps,
-} from "@/lib/server/db/transactions";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/lib/transactions";
 
 export type Props = {
   txnSearchParams: GetTxnsSearchParams;
@@ -140,17 +132,6 @@ export default function SearchBar({ txnSearchParams, onSearch }: Props) {
           />
         </div>
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger>Open</DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuLabel>My Account</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>Profile</DropdownMenuItem>
-          <DropdownMenuItem>Billing</DropdownMenuItem>
-          <DropdownMenuItem>Team</DropdownMenuItem>
-          <DropdownMenuItem>Subscription</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
       <Button onClick={() => handleSearch()}>Search</Button>
     </div>
   );
