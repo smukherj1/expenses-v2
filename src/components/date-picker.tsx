@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 import { ChevronDownIcon } from "lucide-react";
 
@@ -28,7 +26,7 @@ export default function DatePicker({ id, date, setDate }: DatePickerProps) {
           id={id}
           className="w-48 justify-between font-normal"
         >
-          {date ? date.toLocaleDateString() : "Select date"}
+          {date ? formatDate(date) : "Select date"}
           <ChevronDownIcon />
         </Button>
       </PopoverTrigger>
@@ -45,4 +43,12 @@ export default function DatePicker({ id, date, setDate }: DatePickerProps) {
       </PopoverContent>
     </Popover>
   );
+}
+
+function formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Add 1 as months are 0-indexed
+  const day = date.getDate().toString().padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }

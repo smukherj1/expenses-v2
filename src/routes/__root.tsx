@@ -33,7 +33,14 @@ export const Route = createRootRoute({
   }),
   component: RootComponent,
   notFoundComponent: DefaultGlobalNotFound,
-  errorComponent: () => <div>Rekt</div>,
+  errorComponent: (props) => {
+    return (
+      <div>
+        <span>Error loading page:</span>
+        <p>{props.error.message}</p>
+      </div>
+    );
+  },
 });
 
 function RootComponent() {

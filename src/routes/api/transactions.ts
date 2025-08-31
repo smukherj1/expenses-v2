@@ -1,5 +1,5 @@
 import { createServerFileRoute } from "@tanstack/react-start/server";
-import { GetTxns, GetTxnsOpts, TxnCursor } from "@/lib/server/db/transactions";
+import { GetTxns, TxnCursor } from "@/lib/server/db/transactions";
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
 
 function dateOrThrow(
@@ -17,11 +17,6 @@ function dateOrThrow(
     );
   }
   return d;
-}
-
-interface GetNext {
-  date: Date;
-  id: number;
 }
 
 interface GetSearchParams {
