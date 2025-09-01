@@ -45,6 +45,7 @@
   },
   "scripts": {
     "dev": "bunx --bun vite",
+    "build:debug": "NODE_ENV=development bunx --bun vite build --mode=development",
     "build": "bunx --bun vite build"
   }
 }

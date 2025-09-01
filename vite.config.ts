@@ -17,4 +17,9 @@ export default defineConfig({
     viteReact(),
     tailwindcss(),
   ],
+  // Enable to debug hydration errors in production builds.
+  // build: {
+  //   sourcemap: true,
+  //   minify: false,
+  // },
 });
