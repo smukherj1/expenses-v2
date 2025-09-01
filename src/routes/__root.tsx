@@ -8,8 +8,7 @@ import {
   DefaultGlobalNotFound,
 } from "@tanstack/react-router";
 import Navbar from "src/components/navbar";
-//import appCSS from "@/styles/app.css?url";
-import "@/styles/app.css";
+import appCSS from "@/styles/app.css?url";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
@@ -30,8 +29,7 @@ export const Route = createRootRoute({
         title: "Expenses Tracker",
       },
     ],
-    // links: [{ rel: "stylesheet", href: appCSS }],
-    links: [],
+    links: [{ rel: "stylesheet", href: appCSS }],
   }),
   component: RootComponent,
   notFoundComponent: DefaultGlobalNotFound,

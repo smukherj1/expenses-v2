@@ -2,7 +2,6 @@ import { defineConfig } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   server: {
@@ -15,7 +14,6 @@ export default defineConfig({
       target: "bun",
     }),
     viteReact(),
-    tailwindcss(),
   ],
   // Enable to debug hydration errors in production builds.
   // build: {
