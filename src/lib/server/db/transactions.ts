@@ -1,4 +1,3 @@
-import { z } from "zod/v4";
 import { db } from "./client";
 import { transactionsTable } from "./schema";
 import { and, asc, gte, lte } from "drizzle-orm";
@@ -46,6 +45,9 @@ export async function GetTxns(
     pageSize: popts.pageSize || DefaultGetTxnOpts.pageSize,
     next: popts.next || DefaultGetTxnOpts.next,
   };
+  console.log(
+    `GetTxns(popts=${JSON.stringify(popts)}, opts=${JSON.stringify(opts)})`
+  );
   if (opts.pageSize < 0) {
     throw new Error(
       `invalid pageSize given to GetTxns, got ${opts.pageSize}, want <= 0`
@@ -67,6 +69,9 @@ export async function GetTxns(
     .orderBy(asc(transactionsTable.date), asc(transactionsTable.id));
   const limit = opts.pageSize > 0 ? opts.pageSize + 1 : undefined;
   const qWithLimit = limit ? q.limit(limit) : q;
+  console.log(
+    `Running SQL: ${qWithLimit.toSQL().sql} with params ${JSON.stringify(qWithLimit.toSQL().params)}`
+  );
   const result = await qWithLimit;
   const fetched_txns = result.map((t) => {
     return {

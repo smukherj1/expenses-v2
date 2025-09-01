@@ -8,4 +8,4 @@ docker run \
     -v ${PWD}/data:/app/data \
     -p 3000:3000 \
     --env-file .env \
-    expenses-v2:latest
+    expenses-v2:dev

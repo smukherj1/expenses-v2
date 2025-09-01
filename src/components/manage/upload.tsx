@@ -1,4 +1,5 @@
-import { TxnSchema, UploadTxns } from "@/lib/server/db/transactions";
+import { UploadTxns } from "@/lib/server/db/transactions";
+import { TxnSchema } from "@/lib/transactions";
 import { formatZodError } from "@/lib/zodutils";
 import { useMutation } from "@tanstack/react-query";
 import { createServerFn, useServerFn } from "@tanstack/react-start";
