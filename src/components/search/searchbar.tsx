@@ -38,13 +38,8 @@ export default function SearchBar({ txnSearchParams, onSearch }: Props) {
   const [instOp, setInstOp] = React.useState(sopts.instOp);
 
   const handleSearch = () => {
-    console.log(`Requesting search`);
     onSearch({ from, to, desc, descOp, amount, amountOp, inst, instOp });
   };
-  console.log(`Rendering SearchBar with props: ${JSON.stringify(sopts)}`);
-  console.log(
-    `Rendering SearchBar with state: from: ${from}, to: ${to}, desc: ${desc}, descOp: ${descOp}`
-  );
 
   return (
     <div className="flex items-end gap-4 p-4 border rounded-lg">

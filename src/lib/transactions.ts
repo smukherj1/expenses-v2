@@ -121,3 +121,48 @@ export function GetTxnsSearchParamsToOpts(
 
   return opts;
 }
+
+export function GetTxnsOptsToSearchParams(
+  opts: Partial<GetTxnsOpts>
+): GetTxnsSearchParams {
+  const sp: GetTxnsSearchParams = {};
+
+  if (opts.from) {
+    sp.from = opts.from.toISOString().split("T")[0];
+  }
+
+  if (opts.to) {
+    sp.to = opts.to.toISOString().split("T")[0];
+  }
+
+  if (opts.desc) {
+    sp.desc = opts.desc;
+  }
+
+  if (opts.descOp) {
+    sp.descOp = opts.descOp;
+  }
+
+  if (opts.amount !== undefined) {
+    sp.amount = String(opts.amount);
+  }
+
+  if (opts.amountOp) {
+    sp.amountOp = opts.amountOp;
+  }
+
+  if (opts.inst) {
+    sp.inst = opts.inst;
+  }
+
+  if (opts.instOp) {
+    sp.instOp = opts.instOp;
+  }
+
+  if (opts.next) {
+    sp.nextDate = opts.next.date.toISOString().split("T")[0];
+    sp.nextID = String(opts.next.id);
+  }
+
+  return sp;
+}

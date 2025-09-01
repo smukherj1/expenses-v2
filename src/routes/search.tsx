@@ -1,6 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import SearchBar from "@/components/search/searchbar";
-import { GetTxnsSearchParamsSchema, GetTxnsOpts } from "@/lib/transactions";
+import {
+  GetTxnsSearchParamsSchema,
+  GetTxnsOpts,
+  GetTxnsOptsToSearchParams,
+} from "@/lib/transactions";
 
 export const Route = createFileRoute("/search")({
   validateSearch: GetTxnsSearchParamsSchema,
@@ -17,8 +21,14 @@ export const Route = createFileRoute("/search")({
 
 function Search() {
   const sp = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
   const onSearch = (opts: Partial<GetTxnsOpts>) => {
-    console.log(`Search: ${JSON.stringify(opts)}`);
+    navigate({
+      search: () => {
+        const nextSp = GetTxnsOptsToSearchParams(opts);
+        return { ...nextSp };
+      },
+    });
   };
   return (
     <div className="flex flex-col gap-4">
