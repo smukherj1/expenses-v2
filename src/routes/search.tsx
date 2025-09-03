@@ -8,14 +8,15 @@ import {
 } from "@/lib/transactions";
 import { GetTxns } from "@/lib/server/db/transactions";
 import SearchBar from "@/components/search/searchbar";
+import { TransactionsTable } from "@/components/search/transactions-table";
 
-export const GetTxnsServerFn = createServerFn({
+const GetTxnsServerFn = createServerFn({
   method: "GET",
 })
   .validator(GetTxnsSearchParamsSchema)
   .handler(async (ctx) => {
     const opts = GetTxnsSearchParamsToOpts(ctx.data);
-    return GetTxns({ ...opts, pageSize: 10 });
+    return GetTxns({ ...opts, pageSize: 50 });
   });
 
 export const Route = createFileRoute("/search")({
@@ -50,12 +51,10 @@ function Search() {
   };
 
   const data = Route.useLoaderData();
-  console.log(
-    `Loaded ${data.txns.length} transactions, next=${data.next ? JSON.stringify(data.next) : "null"}:\n${JSON.stringify(data.txns, null, 2)}`
-  );
   return (
     <div className="flex flex-col gap-4">
       <SearchBar txnSearchParams={sp} onSearch={onSearch} />
+      <TransactionsTable data={data.txns} />
     </div>
   );
 }
