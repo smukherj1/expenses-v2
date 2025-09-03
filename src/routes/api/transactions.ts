@@ -2,6 +2,7 @@ import { createServerFileRoute } from "@tanstack/react-start/server";
 import { GetTxns } from "@/lib/server/db/transactions";
 import { TxnCursor } from "@/lib/transactions";
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
+import { DateAsString } from "@/lib/date";
 
 function dateOrThrow(
   value: string | null,
@@ -63,7 +64,16 @@ export const ServerRoute = createServerFileRoute("/api/transactions").methods({
                 controller.enqueue(",\n");
               }
               controller.enqueue(
-                result.txns.map((t) => JSON.stringify(t)).join(",\n")
+                result.txns
+                  .map((t) =>
+                    JSON.stringify(t, (key, value) => {
+                      if (key === "date") {
+                        return DateAsString(new Date(value));
+                      }
+                      return value;
+                    })
+                  )
+                  .join(",\n")
               );
               firstChunk = false;
             }

@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import {
   GetTxnsSearchParamsSchema,
-  GetTxnsSearchParams,
   GetTxnsOpts,
   GetTxnsOptsToSearchParams,
   GetTxnsSearchParamsToOpts,
@@ -16,7 +15,7 @@ export const GetTxnsServerFn = createServerFn({
   .validator(GetTxnsSearchParamsSchema)
   .handler(async (ctx) => {
     const opts = GetTxnsSearchParamsToOpts(ctx.data);
-    return GetTxns(opts);
+    return GetTxns({ ...opts, pageSize: 10 });
   });
 
 export const Route = createFileRoute("/search")({

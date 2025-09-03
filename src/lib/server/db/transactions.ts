@@ -1,13 +1,21 @@
 import { db } from "./client";
 import { transactionsTable } from "./schema";
-import { and, asc, gte, lte } from "drizzle-orm";
-import { Txn, GetTxnsOpts, TxnsResult, opInc, opGte } from "@/lib/transactions";
+import { and, asc, eq, gte, lte, or, SQL } from "drizzle-orm";
+import {
+  NewTxn,
+  GetTxnsOpts,
+  TxnsResult,
+  opInc,
+  opGte,
+  TxnCursor,
+} from "@/lib/transactions";
+import { CannonicalizeDate } from "@/lib/date";
 
-export async function UploadTxns(txns: Txn[]) {
+export async function UploadTxns(txns: NewTxn[]) {
   const result = await db.insert(transactionsTable).values(
     txns.map((t) => {
       return {
-        date: t.date.getTime(),
+        date: CannonicalizeDate(t.date).getTime(),
         desc: t.description,
         amountCents: Math.round(parseFloat(t.amount) * 100),
         institution: t.institution,
@@ -60,10 +68,7 @@ export async function GetTxns(
       and(
         gte(transactionsTable.date, opts.from.getTime()),
         lte(transactionsTable.date, opts.to.getTime()),
-        opts.next ? gte(transactionsTable.id, opts.next.id) : undefined,
-        opts.next
-          ? gte(transactionsTable.date, opts.next.date.getTime())
-          : undefined
+        nextConditions(opts.next)
       )
     )
     .orderBy(asc(transactionsTable.date), asc(transactionsTable.id));
@@ -94,10 +99,26 @@ export async function GetTxns(
     limit && fetched_txns.length === limit
       ? fetched_txns.slice(0, limit - 1)
       : fetched_txns;
+  console.log(
+    `Fetched ${txns.length} transactions, next id=${next ? next.id : "!"}, next date=${next ? next.date.getTime() : "!"} `
+  );
   return {
     txns,
     next,
   };
+}
+
+function nextConditions(next: TxnCursor | undefined): SQL | undefined {
+  if (!next) {
+    return;
+  }
+  return or(
+    gte(transactionsTable.date, next.date.getTime()),
+    and(
+      eq(transactionsTable.date, next.date.getTime()),
+      gte(transactionsTable.id, next.id)
+    )
+  );
 }
 
 export async function DeleteTxns() {

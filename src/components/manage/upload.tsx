@@ -1,5 +1,5 @@
 import { UploadTxns } from "@/lib/server/db/transactions";
-import { TxnSchema } from "@/lib/transactions";
+import { NewTxnSchema } from "@/lib/transactions";
 import { formatZodError } from "@/lib/zodutils";
 import { useMutation } from "@tanstack/react-query";
 import { createServerFn, useServerFn } from "@tanstack/react-start";
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-const txnsSchema = z.array(TxnSchema);
+const txnsSchema = z.array(NewTxnSchema);
 
 const uploadTxns = createServerFn({
   method: "POST",

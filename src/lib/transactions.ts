@@ -1,5 +1,6 @@
 import { z } from "zod/v4";
-export const TxnSchema = z.object({
+import { DateAsString, DateFromString } from "./date";
+export const NewTxnSchema = z.object({
   date: z.date(),
   description: z.string().max(200),
   amount: z
@@ -10,7 +11,12 @@ export const TxnSchema = z.object({
   tag: z.string().max(30).optional(),
 });
 
-export type Txn = z.infer<typeof TxnSchema>;
+const txnSchema = NewTxnSchema.extend({
+  id: z.number(),
+});
+
+export type NewTxn = z.infer<typeof NewTxnSchema>;
+export type Txn = z.infer<typeof txnSchema>;
 
 export const GetTxnsSearchParamsSchema = z.object({
   from: z.string().optional(),
@@ -69,15 +75,15 @@ export function GetTxnsSearchParamsToOpts(
   const opts: Partial<GetTxnsOpts> = {};
 
   if (sp.from) {
-    const d = new Date(sp.from);
-    if (!isNaN(d.getTime())) {
+    const d = DateFromString(sp.from);
+    if (d) {
       opts.from = d;
     }
   }
 
   if (sp.to) {
-    const d = new Date(sp.to);
-    if (!isNaN(d.getTime())) {
+    const d = DateFromString(sp.to);
+    if (d) {
       opts.to = d;
     }
   }
@@ -113,8 +119,8 @@ export function GetTxnsSearchParamsToOpts(
 
   if (sp.nextDate && sp.nextID) {
     const id = parseInt(sp.nextID, 10);
-    const date = new Date(sp.nextDate);
-    if (!isNaN(id) && !isNaN(date.getTime())) {
+    const date = DateFromString(sp.nextDate);
+    if (!isNaN(id) && date) {
       opts.next = { date, id };
     }
   }
@@ -128,11 +134,11 @@ export function GetTxnsOptsToSearchParams(
   const sp: GetTxnsSearchParams = {};
 
   if (opts.from) {
-    sp.from = opts.from.toISOString().split("T")[0];
+    sp.from = DateAsString(opts.from);
   }
 
   if (opts.to) {
-    sp.to = opts.to.toISOString().split("T")[0];
+    sp.to = DateAsString(opts.to);
   }
 
   if (opts.desc) {
@@ -160,7 +166,7 @@ export function GetTxnsOptsToSearchParams(
   }
 
   if (opts.next) {
-    sp.nextDate = opts.next.date.toISOString().split("T")[0];
+    sp.nextDate = DateAsString(opts.next.date);
     sp.nextID = String(opts.next.id);
   }
 

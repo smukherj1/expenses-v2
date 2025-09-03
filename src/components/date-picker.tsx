@@ -8,6 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { DateAsString } from "@/lib/date";
 
 export interface DatePickerProps {
   id?: string;
@@ -26,7 +27,7 @@ export default function DatePicker({ id, date, setDate }: DatePickerProps) {
           id={id}
           className="w-48 justify-between font-normal"
         >
-          {date ? formatDate(date) : "Select date"}
+          {date ? DateAsString(date) : "Select date"}
           <ChevronDownIcon />
         </Button>
       </PopoverTrigger>
@@ -43,12 +44,4 @@ export default function DatePicker({ id, date, setDate }: DatePickerProps) {
       </PopoverContent>
     </Popover>
   );
-}
-
-function formatDate(date: Date): string {
-  const year = date.getUTCFullYear();
-  const month = (date.getUTCMonth() + 1).toString().padStart(2, "0"); // Add 1 as months are 0-indexed
-  const day = date.getUTCDate().toString().padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
 }
