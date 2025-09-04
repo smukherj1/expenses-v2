@@ -40,8 +40,9 @@ export const columns: ColumnDef<Txn>[] = [
 
 interface TransactionsTableProps {
   data: Txn[];
+  className?: string;
 }
 
-export function TransactionsTable({ data }: TransactionsTableProps) {
-  return <DataTable columns={columns} data={data} />;
+export function TransactionsTable({ data, className }: TransactionsTableProps) {
+  return <DataTable columns={columns} data={data} className={className} />;
 }

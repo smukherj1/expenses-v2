@@ -19,13 +19,19 @@ import {
   NumOp,
   numOps,
 } from "@/lib/transactions";
+import { cn } from "@/lib/utils";
 
 export type Props = {
   txnSearchParams: GetTxnsSearchParams;
   onSearch: (opts: Partial<GetTxnsOpts>) => void;
+  className?: string;
 };
 
-export default function SearchBar({ txnSearchParams, onSearch }: Props) {
+export default function SearchBar({
+  txnSearchParams,
+  onSearch,
+  className,
+}: Props) {
   const sopts = GetTxnsSearchParamsToOpts(txnSearchParams);
 
   const [from, setFrom] = React.useState(sopts.from);
@@ -42,7 +48,9 @@ export default function SearchBar({ txnSearchParams, onSearch }: Props) {
   };
 
   return (
-    <div className="flex items-end gap-4 p-4 border rounded-lg">
+    <div
+      className={cn("flex items-end gap-4 p-4 border rounded-lg", className)}
+    >
       <div className="flex flex-col gap-2">
         <Label htmlFor="from-date">From</Label>
         <DatePicker id="from-date" date={from} setDate={setFrom} />

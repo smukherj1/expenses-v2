@@ -52,9 +52,13 @@ function Search() {
 
   const data = Route.useLoaderData();
   return (
-    <div className="flex flex-col gap-4">
-      <SearchBar txnSearchParams={sp} onSearch={onSearch} />
-      <TransactionsTable data={data.txns} />
+    <div className="flex flex-col">
+      <SearchBar
+        txnSearchParams={sp}
+        onSearch={onSearch}
+        className="mx-4 mt-4"
+      />
+      <TransactionsTable data={data.txns} className="m-4" />
     </div>
   );
 }
