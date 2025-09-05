@@ -58,7 +58,13 @@ function Search() {
         onSearch={onSearch}
         className="mx-4 mt-4"
       />
-      <TransactionsTable data={data.txns} className="m-4" />
+      <TransactionsTable
+        data={data.txns}
+        className="m-4"
+        onRowIdSelectionChange={(rowIds) =>
+          console.log(`Selected row ids: ${JSON.stringify(rowIds)}`)
+        }
+      />
     </div>
   );
 }

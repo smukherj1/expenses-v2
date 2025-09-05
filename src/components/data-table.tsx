@@ -1,8 +1,11 @@
+import * as React from "react";
 import { cn } from "@/lib/utils";
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
+  Row,
+  RowSelectionState,
   useReactTable,
 } from "@tanstack/react-table";
 
@@ -18,6 +21,8 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  getRowId?: (row: TData) => string;
+  onRowIdSelectionChange?: (rowIDs: string[]) => void;
   className?: string;
 }
 
@@ -25,12 +30,29 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   className,
+  getRowId,
+  onRowIdSelectionChange,
 }: DataTableProps<TData, TValue>) {
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const table = useReactTable({
     data,
     columns,
+    getRowId: getRowId,
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
+    state: {
+      rowSelection,
+    },
   });
+
+  React.useEffect(() => {
+    if (!getRowId || !onRowIdSelectionChange) {
+      return;
+    }
+    onRowIdSelectionChange(
+      table.getFilteredSelectedRowModel().rows.map((row) => row.id)
+    );
+  }, [rowSelection, getRowId, onRowIdSelectionChange]);
 
   return (
     <div className={cn("overflow-hidden rounded-md border", className)}>

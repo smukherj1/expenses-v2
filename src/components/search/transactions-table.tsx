@@ -2,8 +2,31 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Txn } from "@/lib/transactions";
 import { DataTable } from "../data-table";
 import { DateAsString } from "@/lib/date";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const columns: ColumnDef<Txn>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: "date",
     header: "Date",
@@ -41,8 +64,21 @@ export const columns: ColumnDef<Txn>[] = [
 interface TransactionsTableProps {
   data: Txn[];
   className?: string;
+  onRowIdSelectionChange?: (rowIds: string[]) => void;
 }
 
-export function TransactionsTable({ data, className }: TransactionsTableProps) {
-  return <DataTable columns={columns} data={data} className={className} />;
+export function TransactionsTable({
+  data,
+  className,
+  onRowIdSelectionChange,
+}: TransactionsTableProps) {
+  return (
+    <DataTable
+      columns={columns}
+      data={data}
+      className={className}
+      getRowId={(row) => `${row.id}`}
+      onRowIdSelectionChange={onRowIdSelectionChange}
+    />
+  );
 }
