@@ -18,7 +18,7 @@ const GetTxnsServerFn = createServerFn({
   .validator(GetTxnsSearchParamsSchema)
   .handler(async (ctx) => {
     const opts = GetTxnsSearchParamsToOpts(ctx.data);
-    return GetTxns({ ...opts });
+    return GetTxns({ ...opts, ...applyPaginationDefaults(opts) });
   });
 
 export const Route = createFileRoute("/search")({
@@ -40,23 +40,48 @@ export const Route = createFileRoute("/search")({
   },
 });
 
+const defaultPaginationState: PaginationState = {
+  pageIndex: 0,
+  pageSize: 25,
+};
+
+function removePaginationDefaults(
+  s: PaginationState
+): Partial<PaginationState> {
+  return {
+    pageIndex:
+      s.pageIndex !== defaultPaginationState.pageIndex
+        ? s.pageIndex
+        : undefined,
+    pageSize:
+      s.pageSize !== defaultPaginationState.pageSize ? s.pageSize : undefined,
+  };
+}
+
+function applyPaginationDefaults(s: Partial<PaginationState>): PaginationState {
+  return {
+    pageIndex: s.pageIndex ? s.pageIndex : defaultPaginationState.pageIndex,
+    pageSize: s.pageSize ? s.pageSize : defaultPaginationState.pageSize,
+  };
+}
+
 function Search() {
   const [paginationState, setPaginationState] = React.useState<PaginationState>(
-    {
-      pageIndex: 0,
-      pageSize: 25,
-    }
+    defaultPaginationState
   );
   const sp = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
-  const onSearch = (opts: Partial<GetTxnsOpts>) => {
-    navigate({
-      search: () => {
-        const nextSp = GetTxnsOptsToSearchParams(opts);
-        return { ...nextSp, ...paginationState };
-      },
-    });
-  };
+  const onSearch = React.useCallback(
+    (opts: Partial<GetTxnsOpts>) => {
+      navigate({
+        search: () => {
+          const nextSp = GetTxnsOptsToSearchParams(opts);
+          return { ...nextSp, ...removePaginationDefaults(paginationState) };
+        },
+      });
+    },
+    [paginationState]
+  );
   React.useEffect(() => {
     const opts = GetTxnsSearchParamsToOpts(sp);
     onSearch(opts);
