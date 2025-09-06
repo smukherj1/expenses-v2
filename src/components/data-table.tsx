@@ -4,9 +4,10 @@ import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
-  Row,
   RowSelectionState,
   useReactTable,
+  PaginationState,
+  OnChangeFn,
 } from "@tanstack/react-table";
 
 import {
@@ -17,21 +18,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DataTablePagination } from "./data-table-pagination";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   getRowId?: (row: TData) => string;
   onRowIdSelectionChange?: (rowIDs: string[]) => void;
+  paginationState?: PaginationState;
+  setPaginationState?: OnChangeFn<PaginationState>;
+  rowCount?: number;
   className?: string;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-  className,
   getRowId,
   onRowIdSelectionChange,
+  paginationState,
+  setPaginationState,
+  rowCount,
+  className,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const table = useReactTable({
@@ -39,9 +47,19 @@ export function DataTable<TData, TValue>({
     columns,
     getRowId: getRowId,
     onRowSelectionChange: setRowSelection,
+    manualPagination: true,
+    rowCount: rowCount,
     getCoreRowModel: getCoreRowModel(),
+    onPaginationChange: setPaginationState,
     state: {
       rowSelection,
+      pagination: paginationState,
+    },
+    initialState: {
+      // Ignored when paginationState is passed in via props.
+      pagination: {
+        pageSize: 25,
+      },
     },
   });
 
@@ -98,6 +116,7 @@ export function DataTable<TData, TValue>({
           )}
         </TableBody>
       </Table>
+      <DataTablePagination table={table} />
     </div>
   );
 }

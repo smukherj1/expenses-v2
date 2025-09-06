@@ -29,6 +29,8 @@ export const GetTxnsSearchParamsSchema = z.object({
   instOp: z.string().optional(),
   nextDate: z.string().optional(),
   nextID: z.string().optional(),
+  pageSize: z.number().optional(),
+  pageIndex: z.number().optional(),
 });
 
 export type GetTxnsSearchParams = z.infer<typeof GetTxnsSearchParamsSchema>;
@@ -61,11 +63,13 @@ export interface GetTxnsOpts {
   inst: string;
   instOp: StrOp;
   pageSize: number;
+  pageIndex?: number;
   next?: TxnCursor;
 }
 
 export interface TxnsResult {
   txns: Txn[];
+  totalCount: number;
   next?: TxnCursor;
 }
 
@@ -125,6 +129,14 @@ export function GetTxnsSearchParamsToOpts(
     }
   }
 
+  if (sp.pageSize) {
+    opts.pageSize = sp.pageSize;
+  }
+
+  if (sp.pageIndex) {
+    opts.pageIndex = sp.pageIndex;
+  }
+
   return opts;
 }
 
@@ -168,6 +180,14 @@ export function GetTxnsOptsToSearchParams(
   if (opts.next) {
     sp.nextDate = DateAsString(opts.next.date);
     sp.nextID = String(opts.next.id);
+  }
+
+  if (opts.pageSize) {
+    sp.pageSize = opts.pageSize;
+  }
+
+  if (opts.pageIndex) {
+    sp.pageIndex = opts.pageIndex;
   }
 
   return sp;

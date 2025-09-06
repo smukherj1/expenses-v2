@@ -9,6 +9,8 @@ import {
 import { GetTxns } from "@/lib/server/db/transactions";
 import SearchBar from "@/components/search/searchbar";
 import { TransactionsTable } from "@/components/search/transactions-table";
+import { PaginationState } from "@tanstack/react-table";
+import * as React from "react";
 
 const GetTxnsServerFn = createServerFn({
   method: "GET",
@@ -16,7 +18,7 @@ const GetTxnsServerFn = createServerFn({
   .validator(GetTxnsSearchParamsSchema)
   .handler(async (ctx) => {
     const opts = GetTxnsSearchParamsToOpts(ctx.data);
-    return GetTxns({ ...opts, pageSize: 50 });
+    return GetTxns({ ...opts });
   });
 
 export const Route = createFileRoute("/search")({
@@ -39,18 +41,31 @@ export const Route = createFileRoute("/search")({
 });
 
 function Search() {
+  const [paginationState, setPaginationState] = React.useState<PaginationState>(
+    {
+      pageIndex: 0,
+      pageSize: 25,
+    }
+  );
   const sp = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const onSearch = (opts: Partial<GetTxnsOpts>) => {
     navigate({
       search: () => {
         const nextSp = GetTxnsOptsToSearchParams(opts);
-        return { ...nextSp };
+        return { ...nextSp, ...paginationState };
       },
     });
   };
+  React.useEffect(() => {
+    const opts = GetTxnsSearchParamsToOpts(sp);
+    onSearch(opts);
+  }, [paginationState]);
 
   const data = Route.useLoaderData();
+  console.log(
+    `Rendering search page with pagination state ${JSON.stringify(paginationState)} and ${data.txns.length} transactions.`
+  );
   return (
     <div className="flex flex-col">
       <SearchBar
@@ -61,9 +76,13 @@ function Search() {
       <TransactionsTable
         data={data.txns}
         className="m-4"
+        enableActions
         onRowIdSelectionChange={(rowIds) =>
           console.log(`Selected row ids: ${JSON.stringify(rowIds)}`)
         }
+        paginationState={paginationState}
+        setPaginationState={setPaginationState}
+        rowCount={data.totalCount}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import { db } from "./client";
 import { transactionsTable } from "./schema";
-import { and, asc, eq, gte, lte, or, SQL } from "drizzle-orm";
+import { and, asc, eq, gte, gt, lte, or, SQL } from "drizzle-orm";
 import {
   NewTxn,
   GetTxnsOpts,
@@ -51,6 +51,7 @@ export async function GetTxns(
     inst: popts.inst || DefaultGetTxnOpts.inst,
     instOp: popts.instOp || DefaultGetTxnOpts.instOp,
     pageSize: popts.pageSize || DefaultGetTxnOpts.pageSize,
+    pageIndex: popts.pageIndex || DefaultGetTxnOpts.pageIndex,
     next: popts.next || DefaultGetTxnOpts.next,
   };
   console.log(
@@ -61,24 +62,32 @@ export async function GetTxns(
       `invalid pageSize given to GetTxns, got ${opts.pageSize}, want <= 0`
     );
   }
-  let q = db
+  if (opts.pageIndex && opts.next) {
+    throw new Error(
+      `pageIndex=${opts.pageIndex} and next=${JSON.stringify(opts.next)} can't be specified at the same time, only one of them or neither must be specified when getting transactions`
+    );
+  }
+  const baseConditions = [
+    gte(transactionsTable.date, opts.from.getTime()),
+    lte(transactionsTable.date, opts.to.getTime()),
+  ];
+  let countQ = db.$count(transactionsTable, and(...baseConditions));
+  let baseQ = db
     .select()
     .from(transactionsTable)
-    .where(
-      and(
-        gte(transactionsTable.date, opts.from.getTime()),
-        lte(transactionsTable.date, opts.to.getTime()),
-        nextConditions(opts.next)
-      )
-    )
+    .where(and(...baseConditions, nextConditions(opts.next)))
     .orderBy(asc(transactionsTable.date), asc(transactionsTable.id));
-  const limit = opts.pageSize > 0 ? opts.pageSize + 1 : undefined;
-  const qWithLimit = limit ? q.limit(limit) : q;
-  console.log(
-    `Running SQL: ${qWithLimit.toSQL().sql} with params ${JSON.stringify(qWithLimit.toSQL().params)}`
+  const limit = opts.pageSize > 0 ? opts.pageSize : undefined;
+  const qWithLimit = limit ? baseQ.limit(limit) : baseQ;
+  const q = qWithLimit.offset(
+    opts.pageIndex && opts.pageSize > 0 ? opts.pageIndex * opts.pageIndex : 0
   );
-  const result = await qWithLimit;
-  const fetched_txns = result.map((t) => {
+  console.log(
+    `Running SQL: ${q.toSQL().sql} with params ${JSON.stringify(q.toSQL().params)}`
+  );
+  const result = await q;
+  const totalCount = await countQ;
+  const txns = result.map((t) => {
     return {
       id: t.id,
       date: new Date(t.date),
@@ -89,21 +98,18 @@ export async function GetTxns(
     };
   });
   const next =
-    limit && fetched_txns.length === limit
+    txns.length > 0 && txns.length < totalCount
       ? {
-          date: fetched_txns.at(-1)!.date,
-          id: fetched_txns.at(-1)!.id,
+          date: txns.at(-1)!.date,
+          id: txns.at(-1)!.id,
         }
       : undefined;
-  const txns =
-    limit && fetched_txns.length === limit
-      ? fetched_txns.slice(0, limit - 1)
-      : fetched_txns;
   console.log(
-    `Fetched ${txns.length} transactions, next id=${next ? next.id : "!"}, next date=${next ? next.date.getTime() : "!"} `
+    `Fetched ${txns.length} transactions out of ${totalCount}, next id=${next ? next.id : "!"}, next date=${next ? next.date.getTime() : "!"} `
   );
   return {
     txns,
+    totalCount,
     next,
   };
 }
@@ -113,10 +119,10 @@ function nextConditions(next: TxnCursor | undefined): SQL | undefined {
     return;
   }
   return or(
-    gte(transactionsTable.date, next.date.getTime()),
+    gt(transactionsTable.date, next.date.getTime()),
     and(
       eq(transactionsTable.date, next.date.getTime()),
-      gte(transactionsTable.id, next.id)
+      gt(transactionsTable.id, next.id)
     )
   );
 }
