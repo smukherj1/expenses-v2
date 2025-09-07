@@ -76,12 +76,12 @@ function applyPaginationToGetTxnParams({
   data: TxnsResult;
   curPagState: PaginationState;
   newPagState: PaginationState;
-}): GetTxnsSearchParams {
-  const spWithPagination = { ...sp };
-  delete spWithPagination.nextDate;
-  delete spWithPagination.nextID;
-  delete spWithPagination.prevDate;
-  delete spWithPagination.prevID;
+}): [GetTxnsSearchParams, PaginationState] {
+  const spCopy = { ...sp };
+  delete spCopy.nextDate;
+  delete spCopy.nextID;
+  delete spCopy.prevDate;
+  delete spCopy.prevID;
 
   // Reset to page 0 unless we're navigating with the same page size
   // to cur page + 1 or cur page - 1. This is because we paginate using
@@ -94,7 +94,8 @@ function applyPaginationToGetTxnParams({
     newPagState.pageIndex > curPagState.pageIndex + 1 ||
     newPagState.pageIndex < curPagState.pageIndex - 1
   ) {
-    return spWithPagination;
+    delete spCopy.pageIndex;
+    return [spCopy, { pageSize: newPagState.pageSize, pageIndex: 0 }];
   }
 
   if (newPagState.pageIndex > curPagState.pageIndex) {
@@ -103,13 +104,16 @@ function applyPaginationToGetTxnParams({
       console.error(
         `Unable to go to next page because fetched data indicated there's no next page.`
       );
-      return spWithPagination;
+      return [spCopy, { pageSize: newPagState.pageSize, pageIndex: 0 }];
     }
-    return {
-      ...spWithPagination,
-      nextDate: DateAsString(data.next.date),
-      nextID: String(data.next.id),
-    };
+    return [
+      {
+        ...spCopy,
+        nextDate: DateAsString(data.next.date),
+        nextID: String(data.next.id),
+      },
+      newPagState,
+    ];
   }
 
   if (!data.prev) {
@@ -117,14 +121,17 @@ function applyPaginationToGetTxnParams({
     console.error(
       `Unable to go to previous page because fetched data indicated there's no next page.`
     );
-    return spWithPagination;
+    return [spCopy, { pageSize: newPagState.pageSize, pageIndex: 0 }];
   }
 
-  return {
-    ...spWithPagination,
-    prevDate: DateAsString(data.prev.date),
-    prevID: String(data.prev.id),
-  };
+  return [
+    {
+      ...spCopy,
+      prevDate: DateAsString(data.prev.date),
+      prevID: String(data.prev.id),
+    },
+    newPagState,
+  ];
 }
 
 function Search() {
@@ -172,16 +179,19 @@ function Search() {
     ) => {
       const newPaginationState =
         typeof updater === "function" ? updater(paginationState) : updater;
-      console.log(
-        `PaginationState update from ${JSON.stringify(paginationState)} to ${JSON.stringify(newPaginationState)}`
-      );
-      const spWithPagination = applyPaginationToGetTxnParams({
+      const [spWithPagination, newPagState] = applyPaginationToGetTxnParams({
         sp,
         data,
         curPagState: paginationState,
         newPagState: newPaginationState,
       });
-      navigateWithSearchAndPagination(spWithPagination, newPaginationState);
+      console.log(
+        `PaginationState update from ${JSON.stringify(paginationState)}` +
+          `to ${JSON.stringify(newPaginationState)}, ` +
+          `updated sp=${JSON.stringify(spWithPagination)}, ` +
+          `updated pgState=${JSON.stringify(newPagState)}`
+      );
+      navigateWithSearchAndPagination(spWithPagination, newPagState);
     },
     [data, paginationState, sp, navigateWithSearchAndPagination]
   );

@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import type { ReactNode } from "react";
+import * as React from "react";
 import {
   Outlet,
   createRootRoute,
@@ -44,18 +44,24 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
+  const [showDevtools, setShowDevtools] = React.useState(false);
+
+  React.useEffect(() => {
+    // @ts-expect-error
+    window.toggleDevtools = () => setShowDevtools((old) => !old);
+  }, []);
   return (
     <RootDocument>
       <QueryClientProvider client={queryClient}>
         <Navbar />
         <Outlet />
-        <ReactQueryDevtools initialIsOpen={false} />
+        {showDevtools && <ReactQueryDevtools initialIsOpen={false} />}
       </QueryClientProvider>
     </RootDocument>
   );
 }
 
-function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
+function RootDocument({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html className="dark">
       <head>
