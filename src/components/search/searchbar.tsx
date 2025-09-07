@@ -135,7 +135,9 @@ export default function SearchBar({
           />
         </div>
       </div>
-      <Button onClick={() => handleSearch()}>Search</Button>
+      <Button className="justify-end" onClick={() => handleSearch()}>
+        Search
+      </Button>
     </div>
   );
 }

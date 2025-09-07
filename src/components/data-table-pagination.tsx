@@ -14,6 +14,19 @@ interface DataTablePaginationProps<TData> {
   table: Table<TData>;
 }
 
+const _rowsPerPageSelections = (): number[] => {
+  const result: number[] = [];
+  for (let i = 10; i <= 50; i += 5) {
+    result.push(i);
+  }
+  for (let i = 60; i <= 200; i += 10) {
+    result.push(i);
+  }
+  return result;
+};
+
+const rowsPerPageSelections = _rowsPerPageSelections();
+
 export function DataTablePagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
@@ -36,7 +49,7 @@ export function DataTablePagination<TData>({
               <SelectValue placeholder={table.getState().pagination.pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
-              {[25, 30, 40, 50].map((pageSize) => (
+              {rowsPerPageSelections.map((pageSize) => (
                 <SelectItem key={pageSize} value={`${pageSize}`}>
                   {pageSize}
                 </SelectItem>
