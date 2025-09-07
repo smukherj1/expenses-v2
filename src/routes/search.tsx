@@ -5,12 +5,15 @@ import {
   GetTxnsOpts,
   GetTxnsOptsToSearchParams,
   GetTxnsSearchParamsToOpts,
+  GetTxnsSearchParams,
+  TxnsResult,
 } from "@/lib/transactions";
 import { GetTxns } from "@/lib/server/db/transactions";
 import SearchBar from "@/components/search/searchbar";
 import { TransactionsTable } from "@/components/search/transactions-table";
 import { PaginationState } from "@tanstack/react-table";
 import * as React from "react";
+import { DateAsString } from "@/lib/date";
 
 const GetTxnsServerFn = createServerFn({
   method: "GET",
@@ -45,49 +48,144 @@ const defaultPaginationState: PaginationState = {
   pageSize: 25,
 };
 
-function removePaginationDefaults(
-  s: PaginationState
-): Partial<PaginationState> {
-  return {
-    pageIndex:
-      s.pageIndex !== defaultPaginationState.pageIndex
-        ? s.pageIndex
-        : undefined,
-    pageSize:
-      s.pageSize !== defaultPaginationState.pageSize ? s.pageSize : undefined,
-  };
-}
+const applyPaginationDefaults = (
+  s: Partial<PaginationState>
+): PaginationState => ({
+  pageIndex: s.pageIndex ?? defaultPaginationState.pageIndex,
+  pageSize: s.pageSize ?? defaultPaginationState.pageSize,
+});
 
-function applyPaginationDefaults(s: Partial<PaginationState>): PaginationState {
+const removePaginationDefaults = (
+  s: PaginationState
+): Partial<PaginationState> => ({
+  ...(s.pageIndex !== defaultPaginationState.pageIndex && {
+    pageIndex: s.pageIndex,
+  }),
+  ...(s.pageSize !== defaultPaginationState.pageSize && {
+    pageSize: s.pageSize,
+  }),
+});
+
+function applyPaginationToGetTxnParams({
+  sp,
+  data,
+  curPagState,
+  newPagState,
+}: {
+  sp: GetTxnsSearchParams;
+  data: TxnsResult;
+  curPagState: PaginationState;
+  newPagState: PaginationState;
+}): GetTxnsSearchParams {
+  const spWithPagination = { ...sp };
+  delete spWithPagination.nextDate;
+  delete spWithPagination.nextID;
+  delete spWithPagination.prevDate;
+  delete spWithPagination.prevID;
+
+  // Reset to page 0 unless we're navigating with the same page size
+  // to cur page + 1 or cur page - 1. This is because we paginate using
+  // the transaction cursors in the fetched transaction data that only
+  // allow jumping one page at a time.
+  if (
+    curPagState.pageSize !== newPagState.pageSize ||
+    newPagState.pageIndex === 0 ||
+    curPagState.pageIndex === newPagState.pageIndex ||
+    newPagState.pageIndex > curPagState.pageIndex + 1 ||
+    newPagState.pageIndex < curPagState.pageIndex - 1
+  ) {
+    return spWithPagination;
+  }
+
+  if (newPagState.pageIndex > curPagState.pageIndex) {
+    if (!data.next) {
+      // Likely a bug in the total count logic in the transactions db fetching.
+      console.error(
+        `Unable to go to next page because fetched data indicated there's no next page.`
+      );
+      return spWithPagination;
+    }
+    return {
+      ...spWithPagination,
+      nextDate: DateAsString(data.next.date),
+      nextID: String(data.next.id),
+    };
+  }
+
+  if (!data.prev) {
+    // Likely a bug in the total count logic in the transactions db fetching.
+    console.error(
+      `Unable to go to previous page because fetched data indicated there's no next page.`
+    );
+    return spWithPagination;
+  }
+
   return {
-    pageIndex: s.pageIndex ? s.pageIndex : defaultPaginationState.pageIndex,
-    pageSize: s.pageSize ? s.pageSize : defaultPaginationState.pageSize,
+    ...spWithPagination,
+    prevDate: DateAsString(data.prev.date),
+    prevID: String(data.prev.id),
   };
 }
 
 function Search() {
-  const [paginationState, setPaginationState] = React.useState<PaginationState>(
-    defaultPaginationState
-  );
   const sp = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
-  const onSearch = React.useCallback(
-    (opts: Partial<GetTxnsOpts>) => {
+  const data = Route.useLoaderData();
+
+  // pagination is always derived from search params
+  const paginationState = React.useMemo(
+    () => applyPaginationDefaults(sp),
+    [sp]
+  );
+
+  const navigateWithSearchAndPagination = React.useCallback(
+    (curSp: GetTxnsSearchParams, pgState: PaginationState) => {
+      const spWithoutPaginationState = { ...curSp };
+      delete spWithoutPaginationState.pageIndex;
+      delete spWithoutPaginationState.pageSize;
+
+      const newSp = {
+        ...spWithoutPaginationState,
+        ...removePaginationDefaults(pgState),
+      };
+      console.log(
+        `nagivateWithSearchAndPagination(curSp=${JSON.stringify(curSp)}, pgState=${JSON.stringify(pgState)}}) to newSp=${JSON.stringify(newSp)}`
+      );
       navigate({
-        search: () => {
-          const nextSp = GetTxnsOptsToSearchParams(opts);
-          return { ...nextSp, ...removePaginationDefaults(paginationState) };
-        },
+        search: () => newSp,
       });
     },
-    [paginationState]
+    [navigate]
   );
-  React.useEffect(() => {
-    const opts = GetTxnsSearchParamsToOpts(sp);
-    onSearch(opts);
-  }, [paginationState]);
 
-  const data = Route.useLoaderData();
+  const onSearchBarChange = React.useCallback(
+    (opts: Partial<GetTxnsOpts>) => {
+      const newSp = GetTxnsOptsToSearchParams(opts);
+      navigateWithSearchAndPagination(newSp, paginationState);
+    },
+    [paginationState, navigateWithSearchAndPagination]
+  );
+
+  const setPaginationState = React.useCallback(
+    (
+      updater: PaginationState | ((old: PaginationState) => PaginationState)
+    ) => {
+      const newPaginationState =
+        typeof updater === "function" ? updater(paginationState) : updater;
+      console.log(
+        `PaginationState update from ${JSON.stringify(paginationState)} to ${JSON.stringify(newPaginationState)}`
+      );
+      const spWithPagination = applyPaginationToGetTxnParams({
+        sp,
+        data,
+        curPagState: paginationState,
+        newPagState: newPaginationState,
+      });
+      navigateWithSearchAndPagination(spWithPagination, newPaginationState);
+    },
+    [data, paginationState, sp, navigateWithSearchAndPagination]
+  );
+
   console.log(
     `Rendering search page with pagination state ${JSON.stringify(paginationState)} and ${data.txns.length} transactions.`
   );
@@ -95,7 +193,7 @@ function Search() {
     <div className="flex flex-col">
       <SearchBar
         txnSearchParams={sp}
-        onSearch={onSearch}
+        onChange={onSearchBarChange}
         className="mx-4 mt-4"
       />
       <TransactionsTable

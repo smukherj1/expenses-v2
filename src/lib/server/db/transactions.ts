@@ -8,6 +8,7 @@ import {
   opInc,
   opGte,
   TxnCursor,
+  Txn,
 } from "@/lib/transactions";
 import { CannonicalizeDate } from "@/lib/date";
 
@@ -51,7 +52,7 @@ export async function GetTxns(
     inst: popts.inst || DefaultGetTxnOpts.inst,
     instOp: popts.instOp || DefaultGetTxnOpts.instOp,
     pageSize: popts.pageSize || DefaultGetTxnOpts.pageSize,
-    pageIndex: popts.pageIndex || DefaultGetTxnOpts.pageIndex,
+    prev: popts.prev || DefaultGetTxnOpts.prev,
     next: popts.next || DefaultGetTxnOpts.next,
   };
   console.log(
@@ -62,9 +63,9 @@ export async function GetTxns(
       `invalid pageSize given to GetTxns, got ${opts.pageSize}, want <= 0`
     );
   }
-  if (opts.pageIndex && opts.next) {
+  if (opts.prev && opts.next) {
     throw new Error(
-      `pageIndex=${opts.pageIndex} and next=${JSON.stringify(opts.next)} can't be specified at the same time, only one of them or neither must be specified when getting transactions`
+      `prev=${opts.prev} and next=${JSON.stringify(opts.next)} can't be specified at the same time, only one of them or neither must be specified when getting transactions`
     );
   }
   const baseConditions = [
@@ -75,13 +76,15 @@ export async function GetTxns(
   let baseQ = db
     .select()
     .from(transactionsTable)
-    .where(and(...baseConditions, nextConditions(opts.next)))
+    .where(
+      and(
+        ...baseConditions,
+        pageConditions({ prev: opts.prev, next: opts.next })
+      )
+    )
     .orderBy(asc(transactionsTable.date), asc(transactionsTable.id));
   const limit = opts.pageSize > 0 ? opts.pageSize : undefined;
-  const qWithLimit = limit ? baseQ.limit(limit) : baseQ;
-  const q = qWithLimit.offset(
-    opts.pageIndex && opts.pageSize > 0 ? opts.pageIndex * opts.pageIndex : 0
-  );
+  const q = limit ? baseQ.limit(limit) : baseQ;
   console.log(
     `Running SQL: ${q.toSQL().sql} with params ${JSON.stringify(q.toSQL().params)}`
   );
@@ -97,24 +100,39 @@ export async function GetTxns(
       tag: t.tag ? t.tag : undefined,
     };
   });
-  const next =
-    txns.length > 0 && txns.length < totalCount
-      ? {
-          date: txns.at(-1)!.date,
-          id: txns.at(-1)!.id,
-        }
-      : undefined;
-  console.log(
-    `Fetched ${txns.length} transactions out of ${totalCount}, next id=${next ? next.id : "!"}, next date=${next ? next.date.getTime() : "!"} `
-  );
+  console.log(`Fetched ${txns.length} transactions out of ${totalCount}.`);
   return {
     txns,
     totalCount,
-    next,
+    ...prevAndNextFromTxns(txns),
   };
 }
 
-function nextConditions(next: TxnCursor | undefined): SQL | undefined {
+function prevAndNextFromTxns(txns: Txn[]): {
+  prev?: TxnCursor;
+  next?: TxnCursor;
+} {
+  return txns.length > 0
+    ? {
+        prev: {
+          date: txns.at(0)!.date,
+          id: txns.at(0)!.id,
+        },
+        next: {
+          date: txns.at(-1)!.date,
+          id: txns.at(-1)!.id,
+        },
+      }
+    : {};
+}
+
+function pageConditions({
+  prev,
+  next,
+}: {
+  prev?: TxnCursor;
+  next?: TxnCursor;
+}): SQL | undefined {
   if (!next) {
     return;
   }

@@ -23,13 +23,13 @@ import { cn } from "@/lib/utils";
 
 export type Props = {
   txnSearchParams: GetTxnsSearchParams;
-  onSearch: (opts: Partial<GetTxnsOpts>) => void;
+  onChange: (opts: Partial<GetTxnsOpts>) => void;
   className?: string;
 };
 
 export default function SearchBar({
   txnSearchParams,
-  onSearch,
+  onChange: onChange,
   className,
 }: Props) {
   const sopts = GetTxnsSearchParamsToOpts(txnSearchParams);
@@ -44,7 +44,7 @@ export default function SearchBar({
   const [instOp, setInstOp] = React.useState(sopts.instOp);
 
   const handleSearch = () => {
-    onSearch({ from, to, desc, descOp, amount, amountOp, inst, instOp });
+    onChange({ from, to, desc, descOp, amount, amountOp, inst, instOp });
   };
 
   return (

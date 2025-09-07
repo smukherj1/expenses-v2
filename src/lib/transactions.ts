@@ -27,6 +27,8 @@ export const GetTxnsSearchParamsSchema = z.object({
   amountOp: z.string().optional(),
   inst: z.string().optional(),
   instOp: z.string().optional(),
+  prevDate: z.string().optional(),
+  prevID: z.string().optional(),
   nextDate: z.string().optional(),
   nextID: z.string().optional(),
   pageSize: z.number().optional(),
@@ -63,13 +65,14 @@ export interface GetTxnsOpts {
   inst: string;
   instOp: StrOp;
   pageSize: number;
-  pageIndex?: number;
   next?: TxnCursor;
+  prev?: TxnCursor;
 }
 
 export interface TxnsResult {
   txns: Txn[];
   totalCount: number;
+  prev?: TxnCursor;
   next?: TxnCursor;
 }
 
@@ -121,6 +124,14 @@ export function GetTxnsSearchParamsToOpts(
     opts.instOp = sp.instOp as StrOp;
   }
 
+  if (sp.prevDate && sp.prevID) {
+    const id = parseInt(sp.prevID, 10);
+    const date = DateFromString(sp.prevDate);
+    if (!isNaN(id) && date) {
+      opts.prev = { date, id };
+    }
+  }
+
   if (sp.nextDate && sp.nextID) {
     const id = parseInt(sp.nextID, 10);
     const date = DateFromString(sp.nextDate);
@@ -131,10 +142,6 @@ export function GetTxnsSearchParamsToOpts(
 
   if (sp.pageSize) {
     opts.pageSize = sp.pageSize;
-  }
-
-  if (sp.pageIndex) {
-    opts.pageIndex = sp.pageIndex;
   }
 
   return opts;
@@ -177,6 +184,11 @@ export function GetTxnsOptsToSearchParams(
     sp.instOp = opts.instOp;
   }
 
+  if (opts.prev) {
+    sp.prevDate = DateAsString(opts.prev.date);
+    sp.prevID = String(opts.prev.id);
+  }
+
   if (opts.next) {
     sp.nextDate = DateAsString(opts.next.date);
     sp.nextID = String(opts.next.id);
@@ -184,10 +196,6 @@ export function GetTxnsOptsToSearchParams(
 
   if (opts.pageSize) {
     sp.pageSize = opts.pageSize;
-  }
-
-  if (opts.pageIndex) {
-    sp.pageIndex = opts.pageIndex;
   }
 
   return sp;
