@@ -56,15 +56,15 @@ export interface TxnCursor {
 }
 
 export interface GetTxnsOpts {
+  pageSize: number;
   from: Date;
   to: Date;
-  desc: string;
-  descOp: StrOp;
-  amount: number;
-  amountOp: NumOp;
-  inst: string;
-  instOp: StrOp;
-  pageSize: number;
+  desc?: string;
+  descOp?: StrOp;
+  amount?: number;
+  amountOp?: NumOp;
+  inst?: string;
+  instOp?: StrOp;
   next?: TxnCursor;
   prev?: TxnCursor;
 }

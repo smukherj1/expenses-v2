@@ -1,6 +1,19 @@
 import { db } from "./client";
 import { transactionsTable } from "./schema";
-import { and, asc, eq, gte, gt, lte, lt, or, SQL, desc } from "drizzle-orm";
+import {
+  and,
+  asc,
+  eq,
+  gte,
+  gt,
+  lte,
+  lt,
+  or,
+  SQL,
+  desc,
+  like,
+  notLike,
+} from "drizzle-orm";
 import {
   NewTxn,
   GetTxnsOpts,
@@ -9,6 +22,9 @@ import {
   opGte,
   TxnCursor,
   Txn,
+  opExc,
+  opLte,
+  opEq,
 } from "@/lib/transactions";
 import { CannonicalizeDate } from "@/lib/date";
 
@@ -27,16 +43,12 @@ export async function UploadTxns(txns: NewTxn[]) {
   return result.rowsAffected;
 }
 
-const DefaultGetTxnOpts: GetTxnsOpts = {
-  from: new Date(0),
-  to: new Date(),
-  desc: "",
-  descOp: opInc,
-  amount: 0,
-  amountOp: opGte,
-  inst: "",
-  instOp: opInc,
+const DefaultGetTxnOpts = {
   pageSize: 0, // No page limit.
+  from: new Date(0),
+  to: () => {
+    return CannonicalizeDate(new Date());
+  },
 };
 
 export async function GetTxns(
@@ -44,11 +56,7 @@ export async function GetTxns(
 ): Promise<TxnsResult> {
   const opts = validateOptsOrThrow(popts);
 
-  // Conditions that select transactions across all pages.
-  const allPagesConditions = [
-    gte(transactionsTable.date, opts.from.getTime()),
-    lte(transactionsTable.date, opts.to.getTime()),
-  ];
+  const allPagesConditions = allPagesConditionsFromOpts(opts);
   let countQ = db.$count(transactionsTable, and(...allPagesConditions));
   let baseQ = db
     .select()
@@ -77,8 +85,7 @@ export async function GetTxns(
   console.log(
     `Running SQL: ${q.toSQL().sql} with params ${JSON.stringify(q.toSQL().params)}`
   );
-  const result = await q;
-  const totalCount = await countQ;
+  const [totalCount, result] = await Promise.all([countQ, q]);
   const txns = result.map((t) => {
     return {
       id: t.id,
@@ -99,17 +106,17 @@ export async function GetTxns(
 
 function validateOptsOrThrow(popts: Partial<GetTxnsOpts>): GetTxnsOpts {
   const opts: GetTxnsOpts = {
-    from: popts.from || DefaultGetTxnOpts.from,
-    to: popts.to || DefaultGetTxnOpts.to,
-    desc: popts.desc || DefaultGetTxnOpts.desc,
-    descOp: popts.descOp || DefaultGetTxnOpts.descOp,
-    amount: popts.amount || DefaultGetTxnOpts.amount,
-    amountOp: popts.amountOp || DefaultGetTxnOpts.amountOp,
-    inst: popts.inst || DefaultGetTxnOpts.inst,
-    instOp: popts.instOp || DefaultGetTxnOpts.instOp,
     pageSize: popts.pageSize || DefaultGetTxnOpts.pageSize,
-    prev: popts.prev || DefaultGetTxnOpts.prev,
-    next: popts.next || DefaultGetTxnOpts.next,
+    from: popts.from || DefaultGetTxnOpts.from,
+    to: popts.to || DefaultGetTxnOpts.to(),
+    desc: popts.desc,
+    descOp: popts.descOp,
+    amount: popts.amount,
+    amountOp: popts.amountOp,
+    inst: popts.inst,
+    instOp: popts.instOp,
+    prev: popts.prev,
+    next: popts.next,
   };
   if (opts.pageSize < 0) {
     throw new Error(
@@ -122,6 +129,49 @@ function validateOptsOrThrow(popts: Partial<GetTxnsOpts>): GetTxnsOpts {
     );
   }
   return opts;
+}
+
+// Conditions that select transactions across all pages.
+function allPagesConditionsFromOpts(opts: GetTxnsOpts): SQL[] {
+  const result: SQL[] = [
+    gte(transactionsTable.date, opts.from.getTime()),
+    lte(transactionsTable.date, opts.to.getTime()),
+  ];
+  if (opts.desc && opts.descOp) {
+    const desc = `%${opts.desc.toLowerCase()}%`;
+    if (opts.descOp === opInc) {
+      result.push(like(transactionsTable.desc, desc));
+    } else if (opts.descOp === opExc) {
+      result.push(notLike(transactionsTable.desc, desc));
+    } else {
+      console.error(`Ignoring unknown description match op: ${opts.descOp}`);
+    }
+  }
+
+  if (opts.amount && opts.amountOp) {
+    const amountCents = opts.amount * 100;
+    if (opts.amountOp === opGte) {
+      result.push(gte(transactionsTable.amountCents, amountCents));
+    } else if (opts.amountOp === opLte) {
+      result.push(lte(transactionsTable.amountCents, amountCents));
+    } else if (opts.amountOp === opEq) {
+      result.push(eq(transactionsTable.amountCents, amountCents));
+    } else {
+      console.error(`Ignoring unknown amount match op: ${opts.amountOp}`);
+    }
+  }
+
+  if (opts.inst && opts.instOp) {
+    const inst = `%${opts.inst.toLowerCase()}%`;
+    if (opts.instOp === opInc) {
+      result.push(like(transactionsTable.institution, inst));
+    } else if (opts.instOp === opExc) {
+      result.push(notLike(transactionsTable.institution, inst));
+    } else {
+      console.error(`Ignoring unknown institution match op: ${opts.instOp}`);
+    }
+  }
+  return result;
 }
 
 function prevAndNextFromTxns(txns: Txn[]): {

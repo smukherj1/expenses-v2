@@ -49,7 +49,10 @@ export default function SearchBar({
 
   return (
     <div
-      className={cn("flex items-end gap-4 p-4 border rounded-lg", className)}
+      className={cn(
+        "flex flex-row justify-center items-end gap-4 p-4 border rounded-lg",
+        className
+      )}
     >
       <div className="flex flex-col gap-2">
         <Label htmlFor="from-date">From</Label>
@@ -135,9 +138,7 @@ export default function SearchBar({
           />
         </div>
       </div>
-      <Button className="justify-end" onClick={() => handleSearch()}>
-        Search
-      </Button>
+      <Button onClick={() => handleSearch()}>Search</Button>
     </div>
   );
 }
