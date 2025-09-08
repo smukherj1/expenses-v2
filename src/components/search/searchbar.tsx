@@ -9,16 +9,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import {
   GetTxnsOpts,
   GetTxnsSearchParams,
   GetTxnsSearchParamsToOpts,
+  opInc,
+  opGte,
   StrOp,
   strOps,
   NumOp,
   numOps,
 } from "@/lib/transactions";
+import { useDebouncedCallback } from "use-debounce";
 import { cn } from "@/lib/utils";
 
 export type Props = {
@@ -37,15 +39,36 @@ export default function SearchBar({
   const [from, setFrom] = React.useState(sopts.from);
   const [to, setTo] = React.useState(sopts.to);
   const [desc, setDesc] = React.useState(sopts.desc);
-  const [descOp, setDescOp] = React.useState(sopts.descOp);
+  const [descOp, setDescOp] = React.useState<StrOp>(sopts.descOp || opInc);
   const [amount, setAmount] = React.useState(sopts.amount);
-  const [amountOp, setAmountOp] = React.useState(sopts.amountOp);
+  const [amountOp, setAmountOp] = React.useState<NumOp>(
+    sopts.amountOp || opGte
+  );
   const [inst, setInst] = React.useState(sopts.inst);
-  const [instOp, setInstOp] = React.useState(sopts.instOp);
+  const [instOp, setInstOp] = React.useState<StrOp>(sopts.instOp || opInc);
 
-  const handleSearch = () => {
-    onChange({ from, to, desc, descOp, amount, amountOp, inst, instOp });
-  };
+  const debouncedSearch = useDebouncedCallback(() => {
+    onChange({
+      from,
+      to,
+      desc,
+      descOp: desc && desc.length > 0 ? descOp : undefined,
+      amount,
+      amountOp: amount !== undefined ? amountOp : undefined,
+      inst,
+      instOp: inst && inst.length > 0 ? instOp : undefined,
+    });
+  }, 300);
+  React.useEffect(debouncedSearch, [
+    from,
+    to,
+    desc,
+    descOp,
+    amount,
+    amountOp,
+    inst,
+    instOp,
+  ]);
 
   return (
     <div
@@ -138,7 +161,6 @@ export default function SearchBar({
           />
         </div>
       </div>
-      <Button onClick={() => handleSearch()}>Search</Button>
     </div>
   );
 }
