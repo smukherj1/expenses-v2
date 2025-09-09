@@ -52,11 +52,11 @@ export default function SearchBar({
       from,
       to,
       desc,
-      descOp: desc && desc.length > 0 ? descOp : undefined,
+      descOp,
       amount,
-      amountOp: amount !== undefined ? amountOp : undefined,
+      amountOp,
       inst,
-      instOp: inst && inst.length > 0 ? instOp : undefined,
+      instOp,
     });
   }, 300);
   React.useEffect(debouncedSearch, [

@@ -147,12 +147,28 @@ function Search() {
 
   const navigateWithSearchAndPagination = React.useCallback(
     (curSp: GetTxnsSearchParams, pgState: PaginationState) => {
-      const spWithoutPaginationState = { ...curSp };
-      delete spWithoutPaginationState.pageIndex;
-      delete spWithoutPaginationState.pageSize;
+      const curSpCopy = { ...curSp };
+      // Remove existing pagination state from the search params to force apply the
+      // state from 'pgState'. This ensures if a field in pgState is undefined, it
+      // gets removed from the search params.
+      delete curSpCopy.pageIndex;
+      delete curSpCopy.pageSize;
+
+      // Delete the op param if the corresponding search field from the
+      // search bar was unset. This avoids polluting the search params in the
+      // link we navigate to with op values that have no effect.
+      if (!curSpCopy.desc || curSpCopy.desc.length === 0) {
+        delete curSpCopy.descOp;
+      }
+      if (curSpCopy.amount === undefined || isNaN(Number(curSpCopy.amount))) {
+        delete curSpCopy.amountOp;
+      }
+      if (!curSpCopy.inst || curSpCopy.inst.length === 0) {
+        delete curSpCopy.instOp;
+      }
 
       const newSp = {
-        ...spWithoutPaginationState,
+        ...curSpCopy,
         ...removePaginationDefaults(pgState),
       };
       console.log(
