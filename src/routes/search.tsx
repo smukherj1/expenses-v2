@@ -184,9 +184,17 @@ function Search() {
   const onSearchBarChange = React.useCallback(
     (opts: Partial<GetTxnsOpts>) => {
       const newSp = GetTxnsOptsToSearchParams(opts);
+
+      // Need to copy the transaction cursors from 'sp' because the search
+      // params generated from the 'opts' we got from the search bar won't have
+      // them.
+      newSp.nextDate = sp.nextDate;
+      newSp.nextID = sp.nextID;
+      newSp.prevDate = sp.prevDate;
+      newSp.prevID = sp.prevID;
       navigateWithSearchAndPagination(newSp, paginationState);
     },
-    [paginationState, navigateWithSearchAndPagination]
+    [sp, paginationState, navigateWithSearchAndPagination]
   );
 
   const setPaginationState = React.useCallback(

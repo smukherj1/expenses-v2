@@ -9,10 +9,12 @@ import {
   lte,
   lt,
   or,
-  SQL,
   desc,
   like,
   notLike,
+  sql,
+  count,
+  type SQL,
 } from "drizzle-orm";
 import {
   NewTxn,
@@ -27,6 +29,7 @@ import {
   opEq,
 } from "@/lib/transactions";
 import { CannonicalizeDate } from "@/lib/date";
+import { aliasedColumn } from "./utils";
 
 export async function UploadTxns(txns: NewTxn[]) {
   const result = await db.insert(transactionsTable).values(
@@ -56,9 +59,21 @@ export async function GetTxns(
 ): Promise<TxnsResult> {
   const opts = validateOptsOrThrow(popts);
 
+  // Conditions that select transactions across all pages matching
+  // the parameters selected from the search bar.
   const allPagesConditions = allPagesConditionsFromOpts(opts);
-  let countQ = db.$count(transactionsTable, and(...allPagesConditions));
-  let baseQ = db
+
+  // Subquery to count the number of transactions matching the search
+  // bar parameters across all pages.
+  const countQ = db
+    .select({ count: count().as("count") })
+    .from(transactionsTable)
+    .where(and(...allPagesConditions));
+  const countSq = db.$with("countSq").as(countQ);
+
+  // Build a subquery only containing transactions in the page as specified
+  // by the cursors. If there are no cursors, we select the first page.
+  const baseQ = db
     .select()
     .from(transactionsTable)
     .where(
@@ -67,26 +82,100 @@ export async function GetTxns(
         pageConditions({ prev: opts.prev, next: opts.next })
       )
     );
-
   const qWithOrder = opts.prev
     ? baseQ.orderBy(desc(transactionsTable.date), desc(transactionsTable.id))
     : baseQ.orderBy(asc(transactionsTable.date), asc(transactionsTable.id));
 
   const limit = opts.pageSize > 0 ? opts.pageSize : undefined;
   const qWithLimit = limit ? qWithOrder.limit(limit) : qWithOrder;
+  const pageSq = db.$with("pageSq").as(qWithLimit);
 
-  const sq = db.$with("sq").as(qWithLimit);
+  // Subquery sorting the transactions in the selected page in ascending order
+  // with sequence numbers.
+  const pageAsc = db
+    .with(pageSq)
+    .select({
+      id: pageSq.id,
+      date: pageSq.date,
+      desc: pageSq.desc,
+      amountCents: pageSq.amountCents,
+      institution: pageSq.institution,
+      tag: pageSq.tag,
+      ascSeqId:
+        sql`ROW_NUMBER() OVER(ORDER BY ${pageSq.date} ASC, ${pageSq.id} ASC)`.as(
+          "ascSeqId"
+        ),
+    })
+    .from(pageSq)
+    .orderBy(asc(pageSq.date), asc(pageSq.id));
+  const pageAscSq = db.$with("pageAsc").as(pageAsc);
+
+  // Subquery sorting the transactions in the selected page in descending order
+  // with sequence numbers.
+  const pageDesc = db
+    .with(pageSq)
+    .select({
+      id: pageSq.id,
+      date: pageSq.date,
+      desc: pageSq.desc,
+      amountCents: pageSq.amountCents,
+      institution: pageSq.institution,
+      tag: pageSq.tag,
+      descSeqId:
+        sql`ROW_NUMBER() OVER(ORDER BY ${pageSq.date} DESC, ${pageSq.id} DESC)`.as(
+          "descSeqId"
+        ),
+    })
+    .from(pageSq)
+    .orderBy(desc(pageSq.date), desc(pageSq.id));
+  const pageDescSq = db.$with("pageDesc").as(pageDesc);
+
+  // Generate cursors for the next and previous pages from the transactions sorted
+  // in ascending and descending order. The transaction with the highest (date, id)
+  // is the "next" cursor. The transaction with the lowest (date, id) is the "prev"
+  // cursor.
+  const cursorsQ = db
+    .with(pageDescSq, pageAscSq)
+    .select({
+      nextDate: aliasedColumn(pageDescSq.date, "nextDate"),
+      nextId: aliasedColumn(pageDescSq.id, "nextId"),
+      prevDate: aliasedColumn(pageAscSq.date, "prevDate"),
+      prevId: aliasedColumn(pageAscSq.id, "prevId"),
+    })
+    .from(pageDescSq)
+    .innerJoin(pageAscSq, eq(pageAscSq.ascSeqId, pageDescSq.descSeqId))
+    .where(eq(pageAscSq.ascSeqId, 1))
+    .limit(1);
+  const cursorsSq = db.$with("cursors").as(cursorsQ);
 
   // In the final query to fetch the transactions, re-order them in ascending order
   // by date and id for a consistent display order in the web UI. This is needed
   // when displaying a "previous" page which would have sorted transactions in
   // descending order to find the page.
-  const q = db.with(sq).select().from(sq).orderBy(asc(sq.date), asc(sq.id));
-  console.log(
-    `Running SQL: ${q.toSQL().sql} with params ${JSON.stringify(q.toSQL().params)}`
-  );
-  const [totalCount, result] = await Promise.all([countQ, q]);
-  const txns = result.map((t) => {
+  const q = db
+    .with(pageSq, countSq, cursorsSq)
+    .select({
+      id: pageSq.id,
+      date: pageSq.date,
+      desc: pageSq.desc,
+      amountCents: pageSq.amountCents,
+      institution: pageSq.institution,
+      tag: pageSq.tag,
+      totalPages: countSq.count,
+      nextDate: cursorsSq.nextDate,
+      nextId: cursorsSq.nextId,
+      prevDate: cursorsSq.prevDate,
+      prevId: cursorsSq.prevId,
+    })
+    .from(pageSq)
+    .innerJoin(countSq, sql`true`)
+    .innerJoin(cursorsSq, sql`true`)
+    .orderBy(asc(pageSq.date), asc(pageSq.id));
+  // console.log(
+  //   `Running SQL: ${q.toSQL().sql} with params ${JSON.stringify(q.toSQL().params)}`
+  // );
+  const queryResult = await q;
+  const txns = queryResult.map((t) => {
     return {
       id: t.id,
       date: new Date(t.date),
@@ -96,12 +185,28 @@ export async function GetTxns(
       tag: t.tag ? t.tag : undefined,
     };
   });
-  console.log(`Fetched ${txns.length} transactions out of ${totalCount}.`);
-  return {
-    txns,
-    totalCount,
-    ...prevAndNextFromTxns(txns),
-  };
+  const result: TxnsResult =
+    queryResult.length > 0
+      ? {
+          txns,
+          totalCount: queryResult[0]!.totalPages,
+          prev: {
+            date: new Date(queryResult[0]!.prevDate),
+            id: queryResult[0]!.prevId,
+          },
+          next: {
+            date: new Date(queryResult[0]!.nextDate),
+            id: queryResult[0]!.nextId,
+          },
+        }
+      : {
+          txns,
+          totalCount: 0,
+        };
+  console.log(
+    `Fetched ${result.txns.length} transactions out of ${result.totalCount}.`
+  );
+  return result;
 }
 
 function validateOptsOrThrow(popts: Partial<GetTxnsOpts>): GetTxnsOpts {
@@ -172,24 +277,6 @@ function allPagesConditionsFromOpts(opts: GetTxnsOpts): SQL[] {
     }
   }
   return result;
-}
-
-function prevAndNextFromTxns(txns: Txn[]): {
-  prev?: TxnCursor;
-  next?: TxnCursor;
-} {
-  return txns.length > 0
-    ? {
-        prev: {
-          date: txns.at(0)!.date,
-          id: txns.at(0)!.id,
-        },
-        next: {
-          date: txns.at(-1)!.date,
-          id: txns.at(-1)!.id,
-        },
-      }
-    : {};
 }
 
 function pageConditions({
