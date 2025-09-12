@@ -58,19 +58,58 @@ export async function GetTxns(
   popts: Partial<GetTxnsOpts>
 ): Promise<TxnsResult> {
   const opts = validateOptsOrThrow(popts);
-
-  // Conditions that select transactions across all pages matching
-  // the parameters selected from the search bar.
   const allPagesConditions = allPagesConditionsFromOpts(opts);
 
+  const countSq = buildCountSubquery(allPagesConditions);
+  const pageSq = buildPageSubquery(opts, allPagesConditions);
+  const cursorsSq = buildCursorsSubquery(pageSq);
+
+  // In the final query to fetch the transactions, re-order them in ascending order
+  // by date and id for a consistent display order in the web UI. This is needed
+  // when displaying a "previous" page which would have sorted transactions in
+  // descending order to find the page.
+  const q = db
+    .with(pageSq, countSq, cursorsSq)
+    .select({
+      id: pageSq.id,
+      date: pageSq.date,
+      desc: pageSq.desc,
+      amountCents: pageSq.amountCents,
+      institution: pageSq.institution,
+      tag: pageSq.tag,
+      totalPages: countSq.count,
+      nextDate: cursorsSq.nextDate,
+      nextId: cursorsSq.nextId,
+      prevDate: cursorsSq.prevDate,
+      prevId: cursorsSq.prevId,
+    })
+    .from(pageSq)
+    .innerJoin(countSq, sql`true`)
+    .innerJoin(cursorsSq, sql`true`)
+    .orderBy(asc(pageSq.date), asc(pageSq.id));
+
+  // console.log(
+  //   `Running SQL: ${q.toSQL().sql} with params ${JSON.stringify(q.toSQL().params)}`
+  // );
+  const queryResult = await q;
+  const result = formatResults(queryResult);
+  console.log(
+    `Fetched ${result.txns.length} transactions out of ${result.totalCount}.`
+  );
+  return result;
+}
+
+function buildCountSubquery(allPagesConditions: SQL[]) {
   // Subquery to count the number of transactions matching the search
   // bar parameters across all pages.
   const countQ = db
     .select({ count: count().as("count") })
     .from(transactionsTable)
     .where(and(...allPagesConditions));
-  const countSq = db.$with("countSq").as(countQ);
+  return db.$with("countSq").as(countQ);
+}
 
+function buildPageSubquery(opts: GetTxnsOpts, allPagesConditions: SQL[]) {
   // Build a subquery only containing transactions in the page as specified
   // by the cursors. If there are no cursors, we select the first page.
   const baseQ = db
@@ -88,8 +127,10 @@ export async function GetTxns(
 
   const limit = opts.pageSize > 0 ? opts.pageSize : undefined;
   const qWithLimit = limit ? qWithOrder.limit(limit) : qWithOrder;
-  const pageSq = db.$with("pageSq").as(qWithLimit);
+  return db.$with("pageSq").as(qWithLimit);
+}
 
+function buildCursorsSubquery(pageSq: any) {
   // Subquery sorting the transactions in the selected page in ascending order
   // with sequence numbers.
   const pageAsc = db
@@ -146,35 +187,10 @@ export async function GetTxns(
     .innerJoin(pageAscSq, eq(pageAscSq.ascSeqId, pageDescSq.descSeqId))
     .where(eq(pageAscSq.ascSeqId, 1))
     .limit(1);
-  const cursorsSq = db.$with("cursors").as(cursorsQ);
+  return db.$with("cursors").as(cursorsQ);
+}
 
-  // In the final query to fetch the transactions, re-order them in ascending order
-  // by date and id for a consistent display order in the web UI. This is needed
-  // when displaying a "previous" page which would have sorted transactions in
-  // descending order to find the page.
-  const q = db
-    .with(pageSq, countSq, cursorsSq)
-    .select({
-      id: pageSq.id,
-      date: pageSq.date,
-      desc: pageSq.desc,
-      amountCents: pageSq.amountCents,
-      institution: pageSq.institution,
-      tag: pageSq.tag,
-      totalPages: countSq.count,
-      nextDate: cursorsSq.nextDate,
-      nextId: cursorsSq.nextId,
-      prevDate: cursorsSq.prevDate,
-      prevId: cursorsSq.prevId,
-    })
-    .from(pageSq)
-    .innerJoin(countSq, sql`true`)
-    .innerJoin(cursorsSq, sql`true`)
-    .orderBy(asc(pageSq.date), asc(pageSq.id));
-  // console.log(
-  //   `Running SQL: ${q.toSQL().sql} with params ${JSON.stringify(q.toSQL().params)}`
-  // );
-  const queryResult = await q;
+function formatResults(queryResult: any[]): TxnsResult {
   const txns = queryResult.map((t) => {
     return {
       id: t.id,
@@ -203,9 +219,6 @@ export async function GetTxns(
           txns,
           totalCount: 0,
         };
-  console.log(
-    `Fetched ${result.txns.length} transactions out of ${result.totalCount}.`
-  );
   return result;
 }
 
