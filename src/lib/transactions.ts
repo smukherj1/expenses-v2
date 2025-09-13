@@ -72,6 +72,8 @@ export interface GetTxnsOpts {
 export interface TxnsResult {
   txns: Txn[];
   totalCount: number;
+  beforeCount: number;
+  afterCount: number;
   prev?: TxnCursor;
   next?: TxnCursor;
 }

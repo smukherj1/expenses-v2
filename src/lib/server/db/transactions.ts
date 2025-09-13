@@ -23,7 +23,6 @@ import {
   opInc,
   opGte,
   TxnCursor,
-  Txn,
   opExc,
   opLte,
   opEq,
@@ -54,6 +53,22 @@ const DefaultGetTxnOpts = {
   },
 };
 
+interface fetchedTxn {
+  id: number;
+  date: number;
+  desc: string;
+  amountCents: number;
+  institution: string;
+  tag: string | null;
+  totalPages: number;
+  nextDate: number;
+  nextId: number;
+  prevDate: number;
+  prevId: number;
+  beforeCount: number;
+  afterCount: number;
+}
+
 export async function GetTxns(
   popts: Partial<GetTxnsOpts>
 ): Promise<TxnsResult> {
@@ -63,13 +78,14 @@ export async function GetTxns(
   const countSq = buildCountSubquery(allPagesConditions);
   const pageSq = buildPageSubquery(opts, allPagesConditions);
   const cursorsSq = buildCursorsSubquery(pageSq);
+  const beforeAfterSq = countTxnsBeforeAndAfterSubquery(cursorsSq);
 
   // In the final query to fetch the transactions, re-order them in ascending order
   // by date and id for a consistent display order in the web UI. This is needed
   // when displaying a "previous" page which would have sorted transactions in
   // descending order to find the page.
   const q = db
-    .with(pageSq, countSq, cursorsSq)
+    .with(pageSq, countSq, cursorsSq, beforeAfterSq)
     .select({
       id: pageSq.id,
       date: pageSq.date,
@@ -82,19 +98,22 @@ export async function GetTxns(
       nextId: cursorsSq.nextId,
       prevDate: cursorsSq.prevDate,
       prevId: cursorsSq.prevId,
+      beforeCount: beforeAfterSq.beforeCount,
+      afterCount: beforeAfterSq.afterCount,
     })
     .from(pageSq)
     .innerJoin(countSq, sql`true`)
     .innerJoin(cursorsSq, sql`true`)
+    .innerJoin(beforeAfterSq, sql`true`)
     .orderBy(asc(pageSq.date), asc(pageSq.id));
 
   // console.log(
   //   `Running SQL: ${q.toSQL().sql} with params ${JSON.stringify(q.toSQL().params)}`
   // );
   const queryResult = await q;
-  const result = formatResults(queryResult);
+  const result = toTxnResults(queryResult);
   console.log(
-    `Fetched ${result.txns.length} transactions out of ${result.totalCount}.`
+    `Fetched ${result.txns.length} transactions out of ${result.totalCount}, ${result.beforeCount} txns before, ${result.afterCount} txns after.`
   );
   return result;
 }
@@ -130,11 +149,10 @@ function buildPageSubquery(opts: GetTxnsOpts, allPagesConditions: SQL[]) {
   return db.$with("pageSq").as(qWithLimit);
 }
 
-function buildCursorsSubquery(pageSq: any) {
+function buildCursorsSubquery(pageSq: ReturnType<typeof buildPageSubquery>) {
   // Subquery sorting the transactions in the selected page in ascending order
   // with sequence numbers.
   const pageAsc = db
-    .with(pageSq)
     .select({
       id: pageSq.id,
       date: pageSq.date,
@@ -149,12 +167,9 @@ function buildCursorsSubquery(pageSq: any) {
     })
     .from(pageSq)
     .orderBy(asc(pageSq.date), asc(pageSq.id));
-  const pageAscSq = db.$with("pageAsc").as(pageAsc);
+  const pageAscSq = db.$with("pageAscSq").as(pageAsc);
 
-  // Subquery sorting the transactions in the selected page in descending order
-  // with sequence numbers.
   const pageDesc = db
-    .with(pageSq)
     .select({
       id: pageSq.id,
       date: pageSq.date,
@@ -169,7 +184,7 @@ function buildCursorsSubquery(pageSq: any) {
     })
     .from(pageSq)
     .orderBy(desc(pageSq.date), desc(pageSq.id));
-  const pageDescSq = db.$with("pageDesc").as(pageDesc);
+  const pageDescSq = db.$with("pageDescSq").as(pageDesc);
 
   // Generate cursors for the next and previous pages from the transactions sorted
   // in ascending and descending order. The transaction with the highest (date, id)
@@ -187,10 +202,60 @@ function buildCursorsSubquery(pageSq: any) {
     .innerJoin(pageAscSq, eq(pageAscSq.ascSeqId, pageDescSq.descSeqId))
     .where(eq(pageAscSq.ascSeqId, 1))
     .limit(1);
-  return db.$with("cursors").as(cursorsQ);
+  return db.$with("cursorsSq").as(cursorsQ);
 }
 
-function formatResults(queryResult: any[]): TxnsResult {
+// Builds a subquery that counts the transactions before and after the
+// page selected by the given cursor subquery.
+function countTxnsBeforeAndAfterSubquery(
+  cursorsSq: ReturnType<typeof buildCursorsSubquery>
+) {
+  const beforeQ = db
+    .select({
+      beforeCount: count().as("beforeCount"),
+    })
+    .from(transactionsTable)
+    .innerJoin(cursorsSq, sql`true`)
+    .where(
+      or(
+        lt(transactionsTable.date, cursorsSq.prevDate),
+        and(
+          eq(transactionsTable.date, cursorsSq.prevDate),
+          lt(transactionsTable.id, cursorsSq.prevId)
+        )
+      )
+    );
+  const beforeSq = db.$with("beforeSq").as(beforeQ);
+
+  const afterQ = db
+    .select({
+      afterCount: count().as("afterCount"),
+    })
+    .from(transactionsTable)
+    .innerJoin(cursorsSq, sql`true`)
+    .where(
+      or(
+        gt(transactionsTable.date, cursorsSq.nextDate),
+        and(
+          eq(transactionsTable.date, cursorsSq.nextDate),
+          gt(transactionsTable.id, cursorsSq.nextId)
+        )
+      )
+    );
+  const afterSq = db.$with("afterSq").as(afterQ);
+
+  const beforeAfterQ = db
+    .with(beforeSq, afterSq)
+    .select({
+      beforeCount: beforeSq.beforeCount,
+      afterCount: afterSq.afterCount,
+    })
+    .from(beforeSq)
+    .innerJoin(afterSq, sql`true`);
+  return db.$with("beforeAfterSq").as(beforeAfterQ);
+}
+
+function toTxnResults(queryResult: fetchedTxn[]): TxnsResult {
   const txns = queryResult.map((t) => {
     return {
       id: t.id,
@@ -206,6 +271,8 @@ function formatResults(queryResult: any[]): TxnsResult {
       ? {
           txns,
           totalCount: queryResult[0]!.totalPages,
+          beforeCount: queryResult[0]!.beforeCount,
+          afterCount: queryResult[0]!.afterCount,
           prev: {
             date: new Date(queryResult[0]!.prevDate),
             id: queryResult[0]!.prevId,
@@ -218,6 +285,8 @@ function formatResults(queryResult: any[]): TxnsResult {
       : {
           txns,
           totalCount: 0,
+          beforeCount: 0,
+          afterCount: 0,
         };
   return result;
 }
