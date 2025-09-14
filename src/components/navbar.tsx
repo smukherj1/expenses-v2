@@ -19,8 +19,8 @@ export default function Navbar() {
     { to: "/manage", name: "Manage" },
   ];
   return (
-    <div className="p-2 flex items-center justify-between shadow-sm border-b">
-      <Link to="/" className="font-bold text-xl p-2">
+    <div className="p-2 flex items-center justify-between shadow-lg border-b border-neutral-800 bg-neutral-950">
+      <Link to="/" className="font-bold text-xl p-2 text-neutral-100">
         Expenses Tracker
       </Link>
       <NavigationMenu>

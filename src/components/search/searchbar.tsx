@@ -76,107 +76,102 @@ export default function SearchBar({
       return;
     }
     debouncedSearch();
-  }, [
-    from,
-    to,
-    desc,
-    descOp,
-    amount,
-    amountOp,
-    inst,
-    instOp,
-    debouncedSearch,
-  ]);
+  }, [from, to, desc, descOp, amount, amountOp, inst, instOp, debouncedSearch]);
 
   return (
     <div
       className={cn(
-        "flex flex-row justify-center items-end gap-4 p-4 border rounded-lg",
+        "flex flex-row items-center gap-4 p-4 rounded-xl border border-neutral-700 bg-neutral-900 shadow-2xl shadow-neutral-950",
         className
       )}
     >
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="from-date">From</Label>
-        <DatePicker id="from-date" date={from} setDate={setFrom} />
-      </div>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="to-date">To</Label>
-        <DatePicker id="to-date" date={to} setDate={setTo} />
-      </div>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="desc">Description</Label>
-        <div className="flex">
-          <Select value={descOp} onValueChange={(v) => setDescOp(v as StrOp)}>
-            <SelectTrigger className="w-24 rounded-r-none">
-              <SelectValue placeholder="Op" />
-            </SelectTrigger>
-            <SelectContent>
-              {strOps.map((op) => (
-                <SelectItem key={op} value={op}>
-                  {op}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input
-            id="desc"
-            value={desc ?? ""}
-            onChange={(e) => setDesc(e.target.value)}
-            className="rounded-l-none"
-          />
+      <Label className="text-lg mx-4 font-bold text-neutral-100">
+        Search for transactions
+      </Label>
+      <div className="flex flex-1 flex-row justify-center items-center gap-4">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="from-date">From</Label>
+          <DatePicker id="from-date" date={from} setDate={setFrom} />
         </div>
-      </div>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="amount">Amount</Label>
-        <div className="flex">
-          <Select
-            value={amountOp}
-            onValueChange={(v) => setAmountOp(v as NumOp)}
-          >
-            <SelectTrigger className="w-24 rounded-r-none">
-              <SelectValue placeholder="Op" />
-            </SelectTrigger>
-            <SelectContent>
-              {numOps.map((op) => (
-                <SelectItem key={op} value={op}>
-                  {op}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input
-            id="amount"
-            type="number"
-            value={amount ?? ""}
-            onChange={(e) => {
-              const num = parseFloat(e.target.value);
-              setAmount(isNaN(num) ? undefined : num);
-            }}
-            className="rounded-l-none"
-          />
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="to-date">To</Label>
+          <DatePicker id="to-date" date={to} setDate={setTo} />
         </div>
-      </div>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="inst">Institution</Label>
-        <div className="flex">
-          <Select value={instOp} onValueChange={(v) => setInstOp(v as StrOp)}>
-            <SelectTrigger className="w-24 rounded-r-none">
-              <SelectValue placeholder="Op" />
-            </SelectTrigger>
-            <SelectContent>
-              {strOps.map((op) => (
-                <SelectItem key={op} value={op}>
-                  {op}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input
-            id="inst"
-            value={inst ?? ""}
-            onChange={(e) => setInst(e.target.value)}
-            className="rounded-l-none"
-          />
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="desc">Description</Label>
+          <div className="flex">
+            <Select value={descOp} onValueChange={(v) => setDescOp(v as StrOp)}>
+              <SelectTrigger className="w-24 rounded-r-none">
+                <SelectValue placeholder="Op" />
+              </SelectTrigger>
+              <SelectContent>
+                {strOps.map((op) => (
+                  <SelectItem key={op} value={op}>
+                    {op}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              id="desc"
+              value={desc ?? ""}
+              onChange={(e) => setDesc(e.target.value)}
+              className="rounded-l-none"
+            />
+          </div>
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="amount">Amount</Label>
+          <div className="flex">
+            <Select
+              value={amountOp}
+              onValueChange={(v) => setAmountOp(v as NumOp)}
+            >
+              <SelectTrigger className="w-24 rounded-r-none">
+                <SelectValue placeholder="Op" />
+              </SelectTrigger>
+              <SelectContent>
+                {numOps.map((op) => (
+                  <SelectItem key={op} value={op}>
+                    {op}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              id="amount"
+              type="number"
+              value={amount ?? ""}
+              onChange={(e) => {
+                const num = parseFloat(e.target.value);
+                setAmount(isNaN(num) ? undefined : num);
+              }}
+              className="rounded-l-none"
+            />
+          </div>
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="inst">Institution</Label>
+          <div className="flex">
+            <Select value={instOp} onValueChange={(v) => setInstOp(v as StrOp)}>
+              <SelectTrigger className="w-24 rounded-r-none">
+                <SelectValue placeholder="Op" />
+              </SelectTrigger>
+              <SelectContent>
+                {strOps.map((op) => (
+                  <SelectItem key={op} value={op}>
+                    {op}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              id="inst"
+              value={inst ?? ""}
+              onChange={(e) => setInst(e.target.value)}
+              className="rounded-l-none"
+            />
+          </div>
         </div>
       </div>
     </div>

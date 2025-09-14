@@ -251,15 +251,10 @@ function Search() {
     `Rendering search page with pagination state ${JSON.stringify(paginationState)} and ${data.txns.length} transactions.`
   );
   return (
-    <div className="flex flex-col">
-      <SearchBar
-        params={sp}
-        onParamsChange={onSearchBarChange}
-        className="mx-4 mt-4"
-      />
+    <div className="flex flex-col gap-4 p-4">
+      <SearchBar params={sp} onParamsChange={onSearchBarChange} />
       <TransactionsTable
         data={data.txns}
-        className="m-4"
         enableActions
         onRowIdSelectionChange={(rowIds) =>
           console.log(`Selected row ids: ${JSON.stringify(rowIds)}`)
