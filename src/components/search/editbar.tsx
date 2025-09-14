@@ -40,34 +40,41 @@ export default function EditBar({ txnIDs, className }: Props) {
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-4 p-4 rounded-xl bg-card shadow-xl",
+        "flex flex-row items-center gap-4 p-4 rounded-xl bg-card shadow-xl",
         className
       )}
     >
       <Label className="text-lg mx-4 gap-4">
-        Edit tags for {txnIDs.length} selected transaction(s)
+        Edit tags for {txnIDs.length} transaction(s)
       </Label>
-      <div className="flex flex-row items-center gap-2">
-        <Select onValueChange={(v) => setOp(v)} defaultValue={op}>
-          <SelectTrigger className="w-[120px]">
-            <SelectValue placeholder="Select op" />
-          </SelectTrigger>
-          <SelectContent>
-            {tagOpSelection.map((op) => (
-              <SelectItem key={op} value={op}>
-                {op}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Input
-          type="text"
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-          placeholder="comma-separated tags"
-          disabled={op === opClearTags}
-          className="w-[240px]"
-        />
+      <div className="flex flex-1 flex-row items-end justify-center gap-4">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="tag-op">Operation</Label>
+          <Select onValueChange={(v) => setOp(v)} defaultValue={op}>
+            <SelectTrigger className="w-[120px]" id="tag-op">
+              <SelectValue placeholder="Select op" />
+            </SelectTrigger>
+            <SelectContent>
+              {tagOpSelection.map((op) => (
+                <SelectItem key={op} value={op}>
+                  {op}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="tags">Tags</Label>
+          <Input
+            id="tags"
+            type="text"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="comma-separated tags"
+            disabled={op === opClearTags}
+            className="w-[240px]"
+          />
+        </div>
         <Button onClick={onEdit}>Edit</Button>
       </div>
     </div>
