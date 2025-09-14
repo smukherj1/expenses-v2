@@ -10,8 +10,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  GetTxnsOpts,
-  GetTxnsSearchParams,
   GetTxnsSearchParamsToOpts,
   opInc,
   opGte,
@@ -22,19 +20,31 @@ import {
 } from "@/lib/transactions";
 import { useDebouncedCallback } from "use-debounce";
 import { cn } from "@/lib/utils";
+import { DateAsString } from "@/lib/date";
+
+export interface SearchBarParams {
+  from?: string;
+  to?: string;
+  desc?: string;
+  descOp?: string;
+  amount?: string;
+  amountOp?: string;
+  inst?: string;
+  instOp?: string;
+}
 
 export type Props = {
-  txnSearchParams: GetTxnsSearchParams;
-  onChange: (opts: Partial<GetTxnsOpts>) => void;
+  params: SearchBarParams;
+  onParamsChange: (newParams: SearchBarParams) => void;
   className?: string;
 };
 
 export default function SearchBar({
-  txnSearchParams,
-  onChange: onChange,
+  params,
+  onParamsChange,
   className,
 }: Props) {
-  const sopts = GetTxnsSearchParamsToOpts(txnSearchParams);
+  const sopts = GetTxnsSearchParamsToOpts(params);
 
   const [from, setFrom] = React.useState(sopts.from);
   const [to, setTo] = React.useState(sopts.to);
@@ -48,18 +58,25 @@ export default function SearchBar({
   const [instOp, setInstOp] = React.useState<StrOp>(sopts.instOp || opInc);
 
   const debouncedSearch = useDebouncedCallback(() => {
-    onChange({
-      from,
-      to,
+    onParamsChange({
+      from: from ? DateAsString(from) : undefined,
+      to: to ? DateAsString(to) : undefined,
       desc,
       descOp,
-      amount,
+      amount: amount ? String(amount) : undefined,
       amountOp,
       inst,
       instOp,
     });
   }, 300);
-  React.useEffect(debouncedSearch, [
+  const isInitialMount = React.useRef(true);
+  React.useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    debouncedSearch();
+  }, [
     from,
     to,
     desc,
@@ -68,6 +85,7 @@ export default function SearchBar({
     amountOp,
     inst,
     instOp,
+    debouncedSearch,
   ]);
 
   return (

@@ -78,7 +78,10 @@ export async function GetTxns(
   const countSq = buildCountSubquery(allPagesConditions);
   const pageSq = buildPageSubquery(opts, allPagesConditions);
   const cursorsSq = buildCursorsSubquery(pageSq);
-  const beforeAfterSq = countTxnsBeforeAndAfterSubquery(cursorsSq);
+  const beforeAfterSq = countTxnsBeforeAndAfterSubquery(
+    cursorsSq,
+    allPagesConditions
+  );
 
   // In the final query to fetch the transactions, re-order them in ascending order
   // by date and id for a consistent display order in the web UI. This is needed
@@ -208,7 +211,8 @@ function buildCursorsSubquery(pageSq: ReturnType<typeof buildPageSubquery>) {
 // Builds a subquery that counts the transactions before and after the
 // page selected by the given cursor subquery.
 function countTxnsBeforeAndAfterSubquery(
-  cursorsSq: ReturnType<typeof buildCursorsSubquery>
+  cursorsSq: ReturnType<typeof buildCursorsSubquery>,
+  pageConditions: SQL[]
 ) {
   const beforeQ = db
     .select({
@@ -217,11 +221,14 @@ function countTxnsBeforeAndAfterSubquery(
     .from(transactionsTable)
     .innerJoin(cursorsSq, sql`true`)
     .where(
-      or(
-        lt(transactionsTable.date, cursorsSq.prevDate),
-        and(
-          eq(transactionsTable.date, cursorsSq.prevDate),
-          lt(transactionsTable.id, cursorsSq.prevId)
+      and(
+        ...pageConditions,
+        or(
+          lt(transactionsTable.date, cursorsSq.prevDate),
+          and(
+            eq(transactionsTable.date, cursorsSq.prevDate),
+            lt(transactionsTable.id, cursorsSq.prevId)
+          )
         )
       )
     );
@@ -234,11 +241,14 @@ function countTxnsBeforeAndAfterSubquery(
     .from(transactionsTable)
     .innerJoin(cursorsSq, sql`true`)
     .where(
-      or(
-        gt(transactionsTable.date, cursorsSq.nextDate),
-        and(
-          eq(transactionsTable.date, cursorsSq.nextDate),
-          gt(transactionsTable.id, cursorsSq.nextId)
+      and(
+        ...pageConditions,
+        or(
+          gt(transactionsTable.date, cursorsSq.nextDate),
+          and(
+            eq(transactionsTable.date, cursorsSq.nextDate),
+            gt(transactionsTable.id, cursorsSq.nextId)
+          )
         )
       )
     );

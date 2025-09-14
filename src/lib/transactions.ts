@@ -32,7 +32,6 @@ export const GetTxnsSearchParamsSchema = z.object({
   nextDate: z.string().optional(),
   nextID: z.string().optional(),
   pageSize: z.number().optional(),
-  pageIndex: z.number().optional(),
 });
 
 export type GetTxnsSearchParams = z.infer<typeof GetTxnsSearchParamsSchema>;
