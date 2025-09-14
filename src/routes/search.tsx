@@ -86,19 +86,57 @@ const splitSearchParams = (
   ];
 };
 
+const mergeSearchParams = (
+  sbp: SearchBarParams,
+  pgp: PaginationSearchParams
+): GetTxnsSearchParams => {
+  // Delete the op param if the corresponding search field from the
+  // search bar was unset. This avoids polluting the search params in the
+  // link we navigate to with op values that have no effect.
+  if (!sbp.desc || sbp.desc.length === 0) {
+    delete sbp.desc;
+    delete sbp.descOp;
+  }
+  if (sbp.amount === undefined || isNaN(Number(sbp.amount))) {
+    delete sbp.amount;
+    delete sbp.amountOp;
+  }
+  if (!sbp.inst || sbp.inst.length === 0) {
+    delete sbp.inst;
+    delete sbp.instOp;
+  }
+  if (pgp.pageSize === defaultPageSize) {
+    delete pgp.pageSize;
+  }
+  return {
+    from: sbp.from,
+    to: sbp.to,
+    desc: sbp.desc,
+    descOp: sbp.descOp,
+    amount: sbp.amount,
+    amountOp: sbp.amountOp,
+    inst: sbp.inst,
+    instOp: sbp.instOp,
+
+    pageSize: pgp.pageSize,
+    nextDate: pgp.nextDate,
+    nextID: pgp.nextID,
+    prevDate: pgp.prevDate,
+    prevID: pgp.prevID,
+  };
+};
+
 function onPaginationStateChange({
-  sp,
+  sbp,
   data,
   curPagState,
   newPagState,
 }: {
-  sp: GetTxnsSearchParams;
+  sbp: SearchBarParams;
   data: TxnsResult;
   curPagState: PaginationState;
   newPagState: PaginationState;
 }): [SearchBarParams, PaginationSearchParams] {
-  const [sbp, _] = splitSearchParams(sp);
-
   // Reset to page 0 unless we're navigating with the same page size
   // to cur page + 1 or cur page - 1. This is because we paginate using
   // the transaction cursors in the fetched transaction data that only
@@ -153,55 +191,21 @@ function Search() {
   const sp = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const data = Route.useLoaderData();
+  const [selectedTxnIds, setSelectedTxnIds] = React.useState<string[]>([]);
 
-  // pagination is always derived from search params
+  const [sbp, pgp] = React.useMemo(() => splitSearchParams(sp), [sp]);
+
   const paginationState: PaginationState = React.useMemo(
     () => ({
       pageIndex: inferPageIndex(data),
-      pageSize: sp.pageSize ?? defaultPageSize,
+      pageSize: pgp.pageSize ?? defaultPageSize,
     }),
-    [data, sp]
+    [data, pgp]
   );
 
   const navigateWithSearchAndPagination = React.useCallback(
     (sbp: SearchBarParams, pgp: PaginationSearchParams) => {
-      // Delete the op param if the corresponding search field from the
-      // search bar was unset. This avoids polluting the search params in the
-      // link we navigate to with op values that have no effect.
-      if (!sbp.desc || sbp.desc.length === 0) {
-        delete sbp.desc;
-        delete sbp.descOp;
-      }
-      if (sbp.amount === undefined || isNaN(Number(sbp.amount))) {
-        delete sbp.amount;
-        delete sbp.amountOp;
-      }
-      if (!sbp.inst || sbp.inst.length === 0) {
-        delete sbp.inst;
-        delete sbp.instOp;
-      }
-      if (pgp.pageSize === defaultPageSize) {
-        delete pgp.pageSize;
-      }
-
-      const newSp: GetTxnsSearchParams = {
-        // Search bar.
-        from: sbp.from,
-        to: sbp.to,
-        desc: sbp.desc,
-        descOp: sbp.descOp,
-        amount: sbp.amount,
-        amountOp: sbp.amountOp,
-        inst: sbp.inst,
-        instOp: sbp.instOp,
-
-        // Pagination.
-        pageSize: pgp.pageSize,
-        nextDate: pgp.nextDate,
-        nextID: pgp.nextID,
-        prevDate: pgp.prevDate,
-        prevID: pgp.prevID,
-      };
+      const newSp = mergeSearchParams(sbp, pgp);
       console.log(
         `nagivateWithSearchAndPagination(curSp=${JSON.stringify(sbp)}, pgState=${JSON.stringify(pgp)}}) to newSp=${JSON.stringify(newSp)}`
       );
@@ -215,13 +219,13 @@ function Search() {
   const onSearchBarChange = React.useCallback(
     (newSbp: SearchBarParams) => {
       console.log(
-        `onSearchBarChange params=${JSON.stringify(newSbp)}, sp=${JSON.stringify(sp)}`
+        `onSearchBarChange params=${JSON.stringify(newSbp)}, pgp=${JSON.stringify(pgp)}`
       );
       // Discard page cursors on search bar parameters changing because those
       // change how the transactions are paginated.
-      navigateWithSearchAndPagination(newSbp, { pageSize: sp.pageSize });
+      navigateWithSearchAndPagination(newSbp, { pageSize: pgp.pageSize });
     },
-    [sp, navigateWithSearchAndPagination]
+    [pgp, navigateWithSearchAndPagination]
   );
 
   const setPaginationState = React.useCallback(
@@ -230,8 +234,8 @@ function Search() {
     ) => {
       const newPaginationState =
         typeof updater === "function" ? updater(paginationState) : updater;
-      const [spWithPagination, newPagState] = onPaginationStateChange({
-        sp,
+      const [newSbp, newPgp] = onPaginationStateChange({
+        sbp,
         data,
         curPagState: paginationState,
         newPagState: newPaginationState,
@@ -239,12 +243,12 @@ function Search() {
       console.log(
         `PaginationState update from ${JSON.stringify(paginationState)}` +
           `to ${JSON.stringify(newPaginationState)}, ` +
-          `updated sp=${JSON.stringify(spWithPagination)}, ` +
-          `updated pgState=${JSON.stringify(newPagState)}`
+          `updated sp=${JSON.stringify(newSbp)}, ` +
+          `updated pgState=${JSON.stringify(newPgp)}`
       );
-      navigateWithSearchAndPagination(spWithPagination, newPagState);
+      navigateWithSearchAndPagination(newSbp, newPgp);
     },
-    [data, paginationState, sp, navigateWithSearchAndPagination]
+    [data, paginationState, sbp, navigateWithSearchAndPagination]
   );
 
   console.log(
@@ -252,13 +256,14 @@ function Search() {
   );
   return (
     <div className="flex flex-col gap-4 p-4">
-      <SearchBar params={sp} onParamsChange={onSearchBarChange} />
+      <SearchBar params={sbp} onParamsChange={onSearchBarChange} />
       <TransactionsTable
         data={data.txns}
         enableActions
-        onRowIdSelectionChange={(rowIds) =>
-          console.log(`Selected row ids: ${JSON.stringify(rowIds)}`)
-        }
+        onRowIdSelectionChange={(rowIds) => {
+          console.log(`Selected row ids: ${JSON.stringify(rowIds)}`);
+          setSelectedTxnIds(rowIds);
+        }}
         paginationState={paginationState}
         setPaginationState={setPaginationState}
         rowCount={data.totalCount}
