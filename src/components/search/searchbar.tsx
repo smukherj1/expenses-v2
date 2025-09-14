@@ -81,7 +81,7 @@ export default function SearchBar({
   return (
     <div
       className={cn(
-        "flex flex-row items-center gap-4 p-4 rounded-xl border border-blue-800 bg-gradient-to-r from-slate-900 to-blue-950 shadow-2xl shadow-blue-950",
+        "flex flex-row items-center gap-4 p-4 rounded-xl bg-card shadow-xl",
         className
       )}
     >
