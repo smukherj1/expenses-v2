@@ -81,13 +81,11 @@ export default function SearchBar({
   return (
     <div
       className={cn(
-        "flex flex-row items-center gap-4 p-4 rounded-xl border border-neutral-700 bg-neutral-900 shadow-2xl shadow-neutral-950",
+        "flex flex-row items-center gap-4 p-4 rounded-xl border border-blue-800 bg-gradient-to-r from-slate-900 to-blue-950 shadow-2xl shadow-blue-950",
         className
       )}
     >
-      <Label className="text-lg mx-4 font-bold text-neutral-100">
-        Search for transactions
-      </Label>
+      <Label className="text-lg mx-4">Search for transactions</Label>
       <div className="flex flex-1 flex-row justify-center items-center gap-4">
         <div className="flex flex-col gap-2">
           <Label htmlFor="from-date">From</Label>
