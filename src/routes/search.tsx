@@ -1,3 +1,4 @@
+import * as React from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import {
@@ -8,10 +9,10 @@ import {
 } from "@/lib/transactions";
 import { GetTxns } from "@/lib/server/db/transactions";
 import SearchBar from "@/components/search/searchbar";
+import EditBar from "@/components/search/editbar";
 import { SearchBarParams } from "@/components/search/searchbar";
 import { TransactionsTable } from "@/components/search/transactions-table";
 import { PaginationState } from "@tanstack/react-table";
-import * as React from "react";
 import { DateAsString } from "@/lib/date";
 
 const defaultPageSize = 25;
@@ -187,6 +188,25 @@ function onPaginationStateChange({
   ];
 }
 
+function SearchOrEditBar({
+  selectedTxnIds,
+  searchBarParams,
+  onSearchBarChange: onSearchBarParamsChange,
+}: {
+  selectedTxnIds: string[];
+  searchBarParams: SearchBarParams;
+  onSearchBarChange: (newSbp: SearchBarParams) => void;
+}) {
+  return selectedTxnIds.length > 0 ? (
+    <EditBar txnIDs={selectedTxnIds} />
+  ) : (
+    <SearchBar
+      params={searchBarParams}
+      onParamsChange={onSearchBarParamsChange}
+    />
+  );
+}
+
 function Search() {
   const sp = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
@@ -256,13 +276,27 @@ function Search() {
   );
   return (
     <div className="flex flex-col gap-4 p-4">
-      <SearchBar params={sbp} onParamsChange={onSearchBarChange} />
+      <SearchOrEditBar
+        selectedTxnIds={selectedTxnIds}
+        searchBarParams={sbp}
+        onSearchBarChange={onSearchBarChange}
+      />
       <TransactionsTable
         data={data.txns}
         enableActions
         onRowIdSelectionChange={(rowIds) => {
           console.log(`Selected row ids: ${JSON.stringify(rowIds)}`);
-          setSelectedTxnIds(rowIds);
+          // Only update the state if the selection has actually changed.
+          // Otherwise, it can create an infinite re-render loop because
+          // onRowIdSelectionChange is always called when TransactionsTable
+          // loads.
+          if (
+            rowIds.length !== selectedTxnIds.length ||
+            JSON.stringify([...rowIds].sort()) !==
+              JSON.stringify([...selectedTxnIds].sort())
+          ) {
+            setSelectedTxnIds(rowIds);
+          }
         }}
         paginationState={paginationState}
         setPaginationState={setPaginationState}
