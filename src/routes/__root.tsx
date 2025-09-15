@@ -11,6 +11,7 @@ import Navbar from "src/components/navbar";
 import appCSS from "@/styles/app.css?url";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { Toaster } from "@/components/ui/sonner";
 
 // Tanstack Query client.
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ function RootComponent() {
   }, []);
   return (
     <RootDocument>
+      <Toaster richColors position="top-center" />
       <QueryClientProvider client={queryClient}>
         <Navbar />
         <Outlet />

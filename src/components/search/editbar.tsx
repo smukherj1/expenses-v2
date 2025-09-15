@@ -10,31 +10,48 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
-const opAddTags = "Add";
-const opRemoveTags = "Remove";
-const opClearTags = "Clear";
-const tagOpSelection = [opAddTags, opRemoveTags, opClearTags];
+const opSetTag = "Set";
+const opClearTag = "Clear";
+const tagOpSelection = [opSetTag, opClearTag];
 
 export type Props = {
   txnIDs: string[];
   className?: string;
 };
 
+const opToPlaceholder = (op: string) => {
+  if (op === opSetTag) {
+    return "Enter tag to set";
+  }
+  return "";
+};
+
+const opToButtonLabel = (op: string) => {
+  if (op === opSetTag) {
+    return "Set";
+  } else if (op === opClearTag) {
+    return "Clear";
+  }
+  return "Edit";
+};
+
 export default function EditBar({ txnIDs, className }: Props) {
-  const [op, setOp] = React.useState<string>(opAddTags);
-  const [tags, setTags] = React.useState<string>("");
+  const [op, setOp] = React.useState<string>(opSetTag);
+  const [tag, setTag] = React.useState<string>("");
 
   React.useEffect(() => {
-    if (op === opClearTags) {
-      setTags("");
+    if (op === opClearTag && tag.length > 0) {
+      setTag("");
     }
   }, [op]);
 
   const onEdit = () => {
     console.log(
-      `Editing ${txnIDs.length} transactions with op=${op}, tags=${tags}`
+      `Editing ${txnIDs.length} transactions with op=${op}, tag=${tag}`
     );
+    toast.error("rekt");
   };
 
   return (
@@ -44,7 +61,7 @@ export default function EditBar({ txnIDs, className }: Props) {
         className
       )}
     >
-      <Label className="text-lg mx-4 gap-4">
+      <Label className="text-lg mx-4 gap-4 w-[260px]">
         Edit tags for {txnIDs.length} transaction(s)
       </Label>
       <div className="flex flex-1 flex-row items-end justify-center gap-4">
@@ -68,14 +85,21 @@ export default function EditBar({ txnIDs, className }: Props) {
           <Input
             id="tags"
             type="text"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            placeholder="comma-separated tags"
-            disabled={op === opClearTags}
+            value={tag}
+            onChange={(e) => setTag(e.target.value)}
+            placeholder={opToPlaceholder(op)}
+            disabled={op === opClearTag}
             className="w-[240px]"
           />
         </div>
-        <Button onClick={onEdit}>Edit</Button>
+        <Button
+          className="w-[66px]"
+          disabled={op === opSetTag && tag.length === 0}
+          variant={op === opClearTag ? "destructive" : "default"}
+          onClick={onEdit}
+        >
+          {opToButtonLabel(op)}
+        </Button>
       </div>
     </div>
   );
