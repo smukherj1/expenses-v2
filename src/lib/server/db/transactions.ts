@@ -15,6 +15,7 @@ import {
   sql,
   count,
   type SQL,
+  inArray,
 } from "drizzle-orm";
 import {
   NewTxn,
@@ -402,3 +403,16 @@ export async function DeleteTxns() {
   const result = await db.delete(transactionsTable);
   return result.rowsAffected;
 }
+
+export const UpdateTxnsTag = async ({
+  txnIds,
+  tag,
+}: {
+  txnIds: number[];
+  tag?: string | undefined;
+}) => {
+  await db
+    .update(transactionsTable)
+    .set({ tag: tag })
+    .where(inArray(transactionsTable.id, txnIds));
+};

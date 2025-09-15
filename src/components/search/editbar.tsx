@@ -1,4 +1,6 @@
 import * as React from "react";
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod/v4";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -11,10 +13,20 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { UpdateTxnsTag } from "@/lib/server/db/transactions";
 
 const opSetTag = "Set";
 const opClearTag = "Clear";
 const tagOpSelection = [opSetTag, opClearTag];
+
+const updateTxnsTagSchema = z.object({
+  txnIds: z.array(z.number()),
+  tag: z.string().optional(),
+});
+
+const UpdateTxnsTagServerFn = createServerFn({ method: "POST" })
+  .validator(updateTxnsTagSchema)
+  .handler(async (ctx) => UpdateTxnsTag(ctx.data));
 
 export type Props = {
   txnIDs: string[];
