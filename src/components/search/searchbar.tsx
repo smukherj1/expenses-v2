@@ -27,7 +27,7 @@ export interface SearchBarParams {
   to?: string;
   desc?: string;
   descOp?: string;
-  amount?: string;
+  amount?: number;
   amountOp?: string;
   inst?: string;
   instOp?: string;
@@ -63,7 +63,7 @@ export default function SearchBar({
       to: to ? DateAsString(to) : undefined,
       desc,
       descOp,
-      amount: amount ? String(amount) : undefined,
+      amount: amount ? amount : undefined,
       amountOp,
       inst,
       instOp,

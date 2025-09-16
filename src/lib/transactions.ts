@@ -23,7 +23,7 @@ export const GetTxnsSearchParamsSchema = z.object({
   to: z.string().optional(),
   desc: z.string().optional(),
   descOp: z.string().optional(),
-  amount: z.string().optional(),
+  amount: z.number().optional(),
   amountOp: z.string().optional(),
   inst: z.string().optional(),
   instOp: z.string().optional(),
@@ -104,12 +104,7 @@ export function GetTxnsSearchParamsToOpts(
     opts.descOp = sp.descOp as StrOp;
   }
 
-  if (sp.amount && typeof sp.amount === "string") {
-    const amount = parseFloat(sp.amount);
-    if (!isNaN(amount)) {
-      opts.amount = amount;
-    }
-  } else if (typeof sp.amount === "number") {
+  if (sp.amount !== undefined) {
     opts.amount = sp.amount;
   }
 
@@ -170,7 +165,7 @@ export function GetTxnsOptsToSearchParams(
   }
 
   if (opts.amount !== undefined) {
-    sp.amount = String(opts.amount);
+    sp.amount = opts.amount;
   }
 
   if (opts.amountOp) {

@@ -42,7 +42,7 @@ function getColumns(enableActions: boolean): ColumnDef<Txn>[] {
     },
     {
       accessorKey: "amount",
-      header: "Amount",
+      header: () => <div className="text-right">Amount</div>,
       cell: ({ row }) => {
         const amount = parseFloat(row.getValue("amount"));
         const formatted = new Intl.NumberFormat("en-US", {
