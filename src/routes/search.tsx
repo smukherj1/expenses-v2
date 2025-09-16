@@ -1,19 +1,21 @@
 import * as React from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
+import { createServerFn, useServerFn } from "@tanstack/react-start";
+import { z } from "zod/v4";
 import {
   GetTxnsSearchParamsSchema,
   GetTxnsSearchParamsToOpts,
   GetTxnsSearchParams,
   TxnsResult,
 } from "@/lib/transactions";
-import { GetTxns } from "@/lib/server/db/transactions";
+import { GetTxns, UpdateTxnsTag } from "@/lib/server/db/transactions";
 import SearchBar from "@/components/search/searchbar";
-import EditBar from "@/components/search/editbar";
+import EditBar, { TagOp } from "@/components/search/editbar";
 import { SearchBarParams } from "@/components/search/searchbar";
 import { TransactionsTable } from "@/components/search/transactions-table";
 import { PaginationState } from "@tanstack/react-table";
 import { DateAsString } from "@/lib/date";
+import { useMutation } from "@tanstack/react-query";
 
 const defaultPageSize = 25;
 
@@ -35,6 +37,15 @@ const GetTxnsServerFn = createServerFn({
       opts.pageSize !== undefined ? opts.pageSize : defaultPageSize;
     return GetTxns(opts);
   });
+
+const updateTxnsTagSchema = z.object({
+  txnIds: z.array(z.number()),
+  tag: z.string().optional(),
+});
+
+const UpdateTxnsTagServerFn = createServerFn({ method: "POST" })
+  .validator(updateTxnsTagSchema)
+  .handler(async (ctx) => UpdateTxnsTag(ctx.data));
 
 export const Route = createFileRoute("/search")({
   validateSearch: GetTxnsSearchParamsSchema,
@@ -191,19 +202,18 @@ function onPaginationStateChange({
 function SearchOrEditBar({
   selectedTxnIds,
   searchBarParams,
-  onSearchBarChange: onSearchBarParamsChange,
+  onSearchBarChange,
+  onEditBarSubmit,
 }: {
   selectedTxnIds: string[];
   searchBarParams: SearchBarParams;
   onSearchBarChange: (newSbp: SearchBarParams) => void;
+  onEditBarSubmit: (op: TagOp, tag: string | undefined) => void;
 }) {
   return selectedTxnIds.length > 0 ? (
-    <EditBar txnIDs={selectedTxnIds} />
+    <EditBar txnIDs={selectedTxnIds} onSubmit={onEditBarSubmit} />
   ) : (
-    <SearchBar
-      params={searchBarParams}
-      onParamsChange={onSearchBarParamsChange}
-    />
+    <SearchBar params={searchBarParams} onParamsChange={onSearchBarChange} />
   );
 }
 
@@ -211,8 +221,10 @@ function Search() {
   const sp = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const data = Route.useLoaderData();
-  const [selectedTxnIds, setSelectedTxnIds] = React.useState<string[]>([]);
+  const updateTxnsTag = useServerFn(UpdateTxnsTagServerFn);
+  const txnsTagMutator = useMutation({ mutationFn: updateTxnsTag });
 
+  const [selectedTxnIds, setSelectedTxnIds] = React.useState<string[]>([]);
   const [sbp, pgp] = React.useMemo(() => splitSearchParams(sp), [sp]);
 
   const paginationState: PaginationState = React.useMemo(
@@ -248,6 +260,13 @@ function Search() {
     [pgp, navigateWithSearchAndPagination]
   );
 
+  const onEditBarSubmit = React.useCallback(
+    (op: TagOp, tag: string | undefined) => {
+      console.log(`onEditBarSubmit: op=${op}, tag=${tag}`);
+    },
+    [selectedTxnIds]
+  );
+
   const setPaginationState = React.useCallback(
     (
       updater: PaginationState | ((old: PaginationState) => PaginationState)
@@ -280,6 +299,7 @@ function Search() {
         selectedTxnIds={selectedTxnIds}
         searchBarParams={sbp}
         onSearchBarChange={onSearchBarChange}
+        onEditBarSubmit={onEditBarSubmit}
       />
       <TransactionsTable
         data={data.txns}

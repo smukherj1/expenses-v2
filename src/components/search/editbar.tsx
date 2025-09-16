@@ -1,6 +1,4 @@
 import * as React from "react";
-import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod/v4";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -12,35 +10,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { UpdateTxnsTag } from "@/lib/server/db/transactions";
 
 const opSetTag = "Set";
 const opClearTag = "Clear";
-const tagOpSelection = [opSetTag, opClearTag];
+export const tagOps = [opSetTag, opClearTag] as const;
+export type TagOp = (typeof tagOps)[number];
 
-const updateTxnsTagSchema = z.object({
-  txnIds: z.array(z.number()),
-  tag: z.string().optional(),
-});
-
-const UpdateTxnsTagServerFn = createServerFn({ method: "POST" })
-  .validator(updateTxnsTagSchema)
-  .handler(async (ctx) => UpdateTxnsTag(ctx.data));
-
-export type Props = {
-  txnIDs: string[];
-  className?: string;
-};
-
-const opToPlaceholder = (op: string) => {
+const opToPlaceholder = (op: TagOp) => {
   if (op === opSetTag) {
     return "Enter tag to set";
   }
   return "";
 };
 
-const opToButtonLabel = (op: string) => {
+const opToButtonLabel = (op: TagOp) => {
   if (op === opSetTag) {
     return "Set";
   } else if (op === opClearTag) {
@@ -49,8 +32,14 @@ const opToButtonLabel = (op: string) => {
   return "Edit";
 };
 
-export default function EditBar({ txnIDs, className }: Props) {
-  const [op, setOp] = React.useState<string>(opSetTag);
+export type Props = {
+  txnIDs: string[];
+  className?: string;
+  onSubmit?: (op: TagOp, tag: string | undefined) => void;
+};
+
+export default function EditBar({ txnIDs, className, onSubmit }: Props) {
+  const [op, setOp] = React.useState<TagOp>(opSetTag);
   const [tag, setTag] = React.useState<string>("");
 
   React.useEffect(() => {
@@ -59,11 +48,10 @@ export default function EditBar({ txnIDs, className }: Props) {
     }
   }, [op]);
 
-  const onEdit = () => {
-    console.log(
-      `Editing ${txnIDs.length} transactions with op=${op}, tag=${tag}`
-    );
-    toast.error("rekt");
+  const onClick = () => {
+    if (onSubmit) {
+      onSubmit(op, tag);
+    }
   };
 
   return (
@@ -79,12 +67,12 @@ export default function EditBar({ txnIDs, className }: Props) {
       <div className="flex flex-1 flex-row items-end justify-center gap-4">
         <div className="flex flex-col gap-2">
           <Label htmlFor="tag-op">Operation</Label>
-          <Select onValueChange={(v) => setOp(v)} defaultValue={op}>
+          <Select onValueChange={(v) => setOp(v as TagOp)} defaultValue={op}>
             <SelectTrigger className="w-[120px]" id="tag-op">
               <SelectValue placeholder="Select op" />
             </SelectTrigger>
             <SelectContent>
-              {tagOpSelection.map((op) => (
+              {tagOps.map((op) => (
                 <SelectItem key={op} value={op}>
                   {op}
                 </SelectItem>
@@ -108,7 +96,7 @@ export default function EditBar({ txnIDs, className }: Props) {
           className="w-[66px]"
           disabled={op === opSetTag && tag.length === 0}
           variant={op === opClearTag ? "destructive" : "default"}
-          onClick={onEdit}
+          onClick={onClick}
         >
           {opToButtonLabel(op)}
         </Button>
