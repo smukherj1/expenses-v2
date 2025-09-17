@@ -13,8 +13,8 @@ import { cn } from "@/lib/utils";
 
 const opSetTag = "Set";
 const opClearTag = "Clear";
-export const tagOps = [opSetTag, opClearTag] as const;
-export type TagOp = (typeof tagOps)[number];
+const tagOps = [opSetTag, opClearTag] as const;
+type TagOp = (typeof tagOps)[number];
 
 const opToPlaceholder = (op: TagOp) => {
   if (op === opSetTag) {
@@ -35,7 +35,7 @@ const opToButtonLabel = (op: TagOp) => {
 export type Props = {
   txnIDs: string[];
   className?: string;
-  onSubmit?: (op: TagOp, tag: string | undefined) => void;
+  onSubmit?: (tag: string | null) => void;
 };
 
 export default function EditBar({ txnIDs, className, onSubmit }: Props) {
@@ -50,7 +50,7 @@ export default function EditBar({ txnIDs, className, onSubmit }: Props) {
 
   const onClick = () => {
     if (onSubmit) {
-      onSubmit(op, tag);
+      onSubmit(op === opSetTag ? tag : null);
     }
   };
 

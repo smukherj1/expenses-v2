@@ -409,8 +409,9 @@ export const UpdateTxnsTag = async ({
   tag,
 }: {
   txnIds: number[];
-  tag?: string | undefined;
+  tag: string | null;
 }) => {
+  console.log(`UpdateTxnsTag(txnIds=${JSON.stringify(txnIds)}, tag=${tag})`);
   await db
     .update(transactionsTable)
     .set({ tag: tag })

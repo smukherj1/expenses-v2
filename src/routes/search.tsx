@@ -1,5 +1,9 @@
 import * as React from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router";
 import { createServerFn, useServerFn } from "@tanstack/react-start";
 import { z } from "zod/v4";
 import {
@@ -10,12 +14,13 @@ import {
 } from "@/lib/transactions";
 import { GetTxns, UpdateTxnsTag } from "@/lib/server/db/transactions";
 import SearchBar from "@/components/search/searchbar";
-import EditBar, { TagOp } from "@/components/search/editbar";
+import EditBar from "@/components/search/editbar";
 import { SearchBarParams } from "@/components/search/searchbar";
 import { TransactionsTable } from "@/components/search/transactions-table";
 import { PaginationState } from "@tanstack/react-table";
 import { DateAsString } from "@/lib/date";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const defaultPageSize = 25;
 
@@ -40,7 +45,7 @@ const GetTxnsServerFn = createServerFn({
 
 const updateTxnsTagSchema = z.object({
   txnIds: z.array(z.number()),
-  tag: z.string().optional(),
+  tag: z.string().nullable(),
 });
 
 const UpdateTxnsTagServerFn = createServerFn({ method: "POST" })
@@ -208,7 +213,7 @@ function SearchOrEditBar({
   selectedTxnIds: string[];
   searchBarParams: SearchBarParams;
   onSearchBarChange: (newSbp: SearchBarParams) => void;
-  onEditBarSubmit: (op: TagOp, tag: string | undefined) => void;
+  onEditBarSubmit: (tag: string | null) => void;
 }) {
   return selectedTxnIds.length > 0 ? (
     <EditBar txnIDs={selectedTxnIds} onSubmit={onEditBarSubmit} />
@@ -221,8 +226,14 @@ function Search() {
   const sp = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const data = Route.useLoaderData();
+  const router = useRouter();
+
   const updateTxnsTag = useServerFn(UpdateTxnsTagServerFn);
-  const txnsTagMutator = useMutation({ mutationFn: updateTxnsTag });
+  const txnsTagMutator = useMutation({
+    mutationFn: updateTxnsTag,
+    onSuccess: () => router.invalidate(),
+    onError: (error) => toast.error(`Failed to update transactions: ${error}`),
+  });
 
   const [selectedTxnIds, setSelectedTxnIds] = React.useState<string[]>([]);
   const [sbp, pgp] = React.useMemo(() => splitSearchParams(sp), [sp]);
@@ -261,8 +272,13 @@ function Search() {
   );
 
   const onEditBarSubmit = React.useCallback(
-    (op: TagOp, tag: string | undefined) => {
-      console.log(`onEditBarSubmit: op=${op}, tag=${tag}`);
+    (tag: string | null) => {
+      const txnIds = selectedTxnIds
+        .map((id) => Number(id))
+        .filter((id) => !isNaN(id));
+      txnsTagMutator.mutate({
+        data: { txnIds, tag: tag },
+      });
     },
     [selectedTxnIds]
   );
