@@ -1,5 +1,5 @@
 import { db } from "./client";
-import { transactionsTable } from "./schema";
+import { transactionsTable } from "./schema/transactions";
 import {
   and,
   asc,
