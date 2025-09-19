@@ -10,13 +10,16 @@ import {
 interface linkData {
   to: string;
   name: string;
+  // True for pages that are only available when logged in.
+  protected: boolean;
 }
 
 export default function Navbar() {
   const links: linkData[] = [
-    { to: "/", name: "Home" },
-    { to: "/search", name: "Search" },
-    { to: "/manage", name: "Manage" },
+    { to: "/", name: "Home", protected: true },
+    { to: "/login", name: "Login", protected: false },
+    { to: "/search", name: "Search", protected: true },
+    { to: "/manage", name: "Manage", protected: true },
   ];
   return (
     <div className="p-2 flex items-center justify-between shadow-lg border-b border-neutral-800 bg-neutral-950">
