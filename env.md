@@ -14,4 +14,8 @@ BETTER_AUTH_URL=http://localhost:3000
 # Better Auth: Google Oauth
 GOOGLE_OAUTH_CLIENT_ID=""
 GOOGLE_OAUTH_CLIENT_SECRET=""
+
+# Better Auth: Microsoft Oauth (Expires: dd/mm/yyyy)
+MICROSOFT_OAUTH_CLIENT_ID=""
+MICROSOFT_OAUTH_CLIENT_SECRET=""
 ```

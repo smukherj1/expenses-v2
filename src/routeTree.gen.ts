@@ -11,6 +11,7 @@
 import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ManageRouteImport } from './routes/manage'
 import { Route as LoginRouteImport } from './routes/login'
@@ -20,6 +21,11 @@ import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/
 
 const rootServerRouteImport = createServerRootRoute()
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
@@ -56,12 +62,14 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/manage': typeof ManageRoute
   '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/manage': typeof ManageRoute
   '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -69,13 +77,14 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/manage': typeof ManageRoute
   '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/manage' | '/search'
+  fullPaths: '/' | '/login' | '/manage' | '/search' | '/signup'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/manage' | '/search'
-  id: '__root__' | '/' | '/login' | '/manage' | '/search'
+  to: '/' | '/login' | '/manage' | '/search' | '/signup'
+  id: '__root__' | '/' | '/login' | '/manage' | '/search' | '/signup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -83,6 +92,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ManageRoute: typeof ManageRoute
   SearchRoute: typeof SearchRoute
+  SignupRoute: typeof SignupRoute
 }
 export interface FileServerRoutesByFullPath {
   '/api/transactions': typeof ApiTransactionsServerRoute
@@ -112,6 +122,13 @@ export interface RootServerRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/search': {
       id: '/search'
       path: '/search'
@@ -166,6 +183,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ManageRoute: ManageRoute,
   SearchRoute: SearchRoute,
+  SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
