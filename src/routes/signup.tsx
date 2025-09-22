@@ -42,13 +42,18 @@ async function signupEmail({
 
 function Signup() {
   const router = useRouter();
+  const redirectHome = () => router.navigate({ to: "/" });
+
+  const { data: session } = authClient.useSession();
+  if (session !== null) {
+    console.log(`User is already logged in.`);
+    redirectHome();
+  }
+
   const [email, setEmail] = React.useState<string>("");
   const [password, setPassword] = React.useState<string>("");
   const [confirmPassword, setConfirmPassword] = React.useState<string>("");
   const signupMutator = useMutation({ mutationFn: signupEmail });
-  console.log(
-    `Mutation state pending=${signupMutator.isPending}, idle=${signupMutator.isIdle}, success=${signupMutator.isSuccess}, error=${signupMutator.isError}`
-  );
   return (
     <div className="flex flex-col gap-6 max-w-md mx-auto mt-8">
       <Card className="overflow-hidden p-0">
@@ -61,7 +66,7 @@ function Signup() {
                 email,
                 password,
                 confirmPassword,
-                onSuccess: () => router.navigate({ to: "/" }),
+                onSuccess: redirectHome,
               });
             }}
           >
@@ -109,9 +114,7 @@ function Signup() {
                 disabled={signupMutator.isPending}
               >
                 {signupMutator.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  </>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   "Sign Up"
                 )}
