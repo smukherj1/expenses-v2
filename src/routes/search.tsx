@@ -22,6 +22,7 @@ import { DateAsString } from "@/lib/date";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ensureAuth } from "@/lib/client/auth";
+import { authMiddleware } from "@/lib/server/auth";
 
 const defaultPageSize = 25;
 
@@ -36,6 +37,7 @@ interface PaginationSearchParams {
 const GetTxnsServerFn = createServerFn({
   method: "GET",
 })
+  .middleware([authMiddleware])
   .validator(GetTxnsSearchParamsSchema)
   .handler(async (ctx) => {
     const opts = GetTxnsSearchParamsToOpts(ctx.data);
@@ -50,6 +52,7 @@ const updateTxnsTagSchema = z.object({
 });
 
 const UpdateTxnsTagServerFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
   .validator(updateTxnsTagSchema)
   .handler(async (ctx) => UpdateTxnsTag(ctx.data));
 

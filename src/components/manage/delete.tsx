@@ -9,12 +9,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { authMiddleware } from "@/lib/server/auth";
 
 const deleteTxns = createServerFn({
   method: "POST",
-}).handler(async () => {
-  return DeleteTxns();
-});
+})
+  .middleware([authMiddleware])
+  .handler(async () => {
+    return DeleteTxns();
+  });
 
 export default function Component() {
   const deleter = useMutation({ mutationFn: useServerFn(deleteTxns) });

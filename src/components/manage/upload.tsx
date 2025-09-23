@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { authMiddleware } from "@/lib/server/auth";
 
 const txnsSchema = z.array(NewTxnSchema);
 
@@ -21,6 +22,7 @@ const uploadTxns = createServerFn({
   method: "POST",
   response: "data",
 })
+  .middleware([authMiddleware])
   .validator((data) => {
     if (!(data instanceof FormData)) {
       throw new Error("Invalid form data");

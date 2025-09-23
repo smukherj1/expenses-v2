@@ -6,6 +6,9 @@ export const authMiddleware = createMiddleware({ type: "function" }).server(
   async ({ next }) => {
     const request = getWebRequest();
     const session = await auth.api.getSession({ headers: request.headers });
+    if (session === null) {
+      throw new Error(`Unauthenticated`);
+    }
     return next({ context: { session } });
   }
 );
