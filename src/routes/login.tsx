@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "@tanstack/react-router";
 import SocialLogin from "@/components/social-login";
-import { authClient } from "@/lib/auth-client";
+import { authClient, ensureNotAuth } from "@/lib/client/auth";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -39,11 +39,7 @@ function RouteComponent() {
   const router = useRouter();
   const redirectHome = () => router.navigate({ to: "/" });
 
-  const { data: session } = authClient.useSession();
-  if (session !== null) {
-    console.log(`User is already logged in.`);
-    redirectHome();
-  }
+  ensureNotAuth();
 
   const [email, setEmail] = React.useState<string>("");
   const [password, setPassword] = React.useState<string>("");

@@ -6,7 +6,7 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/lib/client/auth";
 import { Button } from "./ui/button";
 import { useMutation } from "@tanstack/react-query";
 

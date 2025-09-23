@@ -21,6 +21,7 @@ import { PaginationState } from "@tanstack/react-table";
 import { DateAsString } from "@/lib/date";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { ensureAuth } from "@/lib/client/auth";
 
 const defaultPageSize = 25;
 
@@ -223,6 +224,8 @@ function SearchOrEditBar({
 }
 
 function Search() {
+  ensureAuth();
+
   const sp = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const data = Route.useLoaderData();

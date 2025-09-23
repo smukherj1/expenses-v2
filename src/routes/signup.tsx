@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client";
+import { authClient, ensureNotAuth } from "@/lib/client/auth";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
@@ -44,11 +44,7 @@ function Signup() {
   const router = useRouter();
   const redirectHome = () => router.navigate({ to: "/" });
 
-  const { data: session } = authClient.useSession();
-  if (session !== null) {
-    console.log(`User is already logged in.`);
-    redirectHome();
-  }
+  ensureNotAuth();
 
   const [email, setEmail] = React.useState<string>("");
   const [password, setPassword] = React.useState<string>("");
