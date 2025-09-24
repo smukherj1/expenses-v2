@@ -1,5 +1,4 @@
 import { Link, useRouter } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -7,8 +6,7 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { authClient } from "@/lib/client/auth";
-import { Button } from "./ui/button";
-import { useMutation } from "@tanstack/react-query";
+import { UserAvatar } from "./avatar";
 
 interface linkData {
   to: string;
@@ -20,12 +18,9 @@ export default function Navbar() {
   const { data: session } = authClient.useSession();
   const loggedIn = session !== null;
 
-  const router = useRouter();
-  const redirectHome = () => router.navigate({ to: "/" });
-  const signoutMutator = useMutation({
-    mutationFn: () =>
-      authClient.signOut({ fetchOptions: { onSuccess: redirectHome } }),
-  });
+  console.log(
+    `username=${session?.user.name}, userImage=${session?.user.image}`
+  );
 
   // We show the link to the home page irrespective of the
   // logged in state. Otherwise we only display a link to a
@@ -58,21 +53,8 @@ export default function Navbar() {
             );
           })}
           {loggedIn && (
-            <NavigationMenuItem
-              key="Sign Out"
-              className="flex flex-row items-center justify-center w-[90px]"
-            >
-              {signoutMutator.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Button
-                  variant="link"
-                  className={`${navigationMenuTriggerStyle()} font-bold`}
-                  onClick={() => signoutMutator.mutate()}
-                >
-                  Sign Out
-                </Button>
-              )}
+            <NavigationMenuItem>
+              <UserAvatar />
             </NavigationMenuItem>
           )}
         </NavigationMenuList>

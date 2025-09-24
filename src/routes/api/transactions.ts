@@ -3,7 +3,7 @@ import { GetTxns } from "@/lib/server/db/transactions";
 import { TxnCursor } from "@/lib/transactions";
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
 import { DateAsString } from "@/lib/date";
-import { authAPIMiddleware, authMiddleware } from "@/lib/server/auth";
+import { authAPIMiddleware } from "@/lib/server/auth";
 
 function dateOrThrow(
   value: string | null,
