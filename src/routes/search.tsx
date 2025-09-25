@@ -39,11 +39,11 @@ const GetTxnsServerFn = createServerFn({
 })
   .middleware([authMiddleware])
   .validator(GetTxnsSearchParamsSchema)
-  .handler(async (ctx) => {
-    const opts = GetTxnsSearchParamsToOpts(ctx.data);
+  .handler(async ({ data, context }) => {
+    const opts = GetTxnsSearchParamsToOpts(data);
     opts.pageSize =
       opts.pageSize !== undefined ? opts.pageSize : defaultPageSize;
-    return GetTxns(opts);
+    return GetTxns(context.session.user.id, opts);
   });
 
 const updateTxnsTagSchema = z.object({
@@ -54,7 +54,13 @@ const updateTxnsTagSchema = z.object({
 const UpdateTxnsTagServerFn = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(updateTxnsTagSchema)
-  .handler(async (ctx) => UpdateTxnsTag(ctx.data));
+  .handler(async ({ data, context }) =>
+    UpdateTxnsTag({
+      userId: context.session.user.id,
+      tag: data.tag,
+      txnIds: data.txnIds,
+    })
+  );
 
 export const Route = createFileRoute("/search")({
   validateSearch: GetTxnsSearchParamsSchema,

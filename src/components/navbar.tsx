@@ -1,4 +1,4 @@
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -17,10 +17,6 @@ interface linkData {
 export default function Navbar() {
   const { data: session } = authClient.useSession();
   const loggedIn = session !== null;
-
-  console.log(
-    `username=${session?.user.name}, userImage=${session?.user.image}`
-  );
 
   // We show the link to the home page irrespective of the
   // logged in state. Otherwise we only display a link to a

@@ -15,8 +15,8 @@ const deleteTxns = createServerFn({
   method: "POST",
 })
   .middleware([authMiddleware])
-  .handler(async () => {
-    return DeleteTxns();
+  .handler(async ({ context }) => {
+    return DeleteTxns(context.session.user.id);
   });
 
 export default function Component() {

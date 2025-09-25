@@ -37,7 +37,7 @@ function parseGETSearchParams(params: URLSearchParams): GetSearchParams {
 export const ServerRoute = createServerFileRoute("/api/transactions")
   .middleware([authAPIMiddleware])
   .methods({
-    GET: async ({ request }) => {
+    GET: async ({ request, context }) => {
       const url = new URL(request.url);
 
       var params: GetSearchParams;
@@ -60,7 +60,11 @@ export const ServerRoute = createServerFileRoute("/api/transactions")
           try {
             while (true) {
               const pageSize = 2000;
-              const result = await GetTxns({ ...params, pageSize, next });
+              const result = await GetTxns(context.session.user.id, {
+                ...params,
+                pageSize,
+                next,
+              });
 
               if (result.txns.length > 0) {
                 if (!firstChunk) {

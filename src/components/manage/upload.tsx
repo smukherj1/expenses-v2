@@ -35,7 +35,7 @@ const uploadTxns = createServerFn({
       file: file,
     };
   })
-  .handler(async ({ data: { file } }) => {
+  .handler(async ({ data: { file }, context }) => {
     const contents = await file.text();
     var json: any;
     try {
@@ -57,7 +57,7 @@ const uploadTxns = createServerFn({
     }
     var uploaded = 0;
     try {
-      uploaded = await UploadTxns(result.data);
+      uploaded = await UploadTxns(context.session.user.id, result.data);
     } catch (error) {
       console.log(`Error uploading transactions: ${error}`);
       throw new Error("Error saving uploaded transactions to the database");
