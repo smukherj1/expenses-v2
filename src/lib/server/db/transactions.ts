@@ -30,8 +30,10 @@ import {
 } from "@/lib/transactions";
 import { CannonicalizeDate } from "@/lib/date";
 import { aliasedColumn } from "./utils";
+import { AuthSession } from "@/lib/auth";
 
-export async function UploadTxns(userId: string, txns: NewTxn[]) {
+export async function UploadTxns(session: AuthSession, txns: NewTxn[]) {
+  const userId = userIdFromSession(session);
   const result = await db.insert(transactionsTableV2).values(
     txns.map((t) => {
       return {
@@ -72,11 +74,12 @@ interface fetchedTxn {
 }
 
 export async function GetTxns(
-  userID: string,
+  session: AuthSession,
   popts: Partial<GetTxnsOpts>
 ): Promise<TxnsResult> {
-  const opts = validateOptsOrThrow(userID, popts);
-  const allPagesConditions = allPagesConditionsFromOpts(userID, opts);
+  const userId = userIdFromSession(session);
+  const opts = validateOptsOrThrow(popts);
+  const allPagesConditions = allPagesConditionsFromOpts(userId, opts);
 
   const countSq = buildCountSubquery(allPagesConditions);
   const pageSq = buildPageSubquery(opts, allPagesConditions);
@@ -307,10 +310,7 @@ function toTxnResults(queryResult: fetchedTxn[]): TxnsResult {
   return result;
 }
 
-function validateOptsOrThrow(
-  userId: string,
-  popts: Partial<GetTxnsOpts>
-): GetTxnsOpts {
+function validateOptsOrThrow(popts: Partial<GetTxnsOpts>): GetTxnsOpts {
   const opts: GetTxnsOpts = {
     pageSize: popts.pageSize || DefaultGetTxnOpts.pageSize,
     from: popts.from || DefaultGetTxnOpts.from,
@@ -324,9 +324,6 @@ function validateOptsOrThrow(
     prev: popts.prev,
     next: popts.next,
   };
-  if (userId.length === 0) {
-    throw new Error("userId can't be a blank string");
-  }
   if (opts.pageSize < 0) {
     throw new Error(
       `invalid pageSize given to GetTxns, got ${opts.pageSize}, want <= 0`
@@ -411,10 +408,8 @@ function pageConditions({
   }
 }
 
-export async function DeleteTxns(userId: string) {
-  if (userId.length === 0) {
-    throw new Error("userId can't be an empty string");
-  }
+export async function DeleteTxns(session: AuthSession) {
+  const userId = userIdFromSession(session);
   const result = await db
     .delete(transactionsTableV2)
     .where(eq(transactionsTableV2.userId, userId));
@@ -422,17 +417,15 @@ export async function DeleteTxns(userId: string) {
 }
 
 export const UpdateTxnsTag = async ({
-  userId,
+  session,
   txnIds,
   tag,
 }: {
-  userId: string;
+  session: AuthSession;
   txnIds: number[];
   tag: string | null;
 }) => {
-  if (userId.length === 0) {
-    throw new Error("userId can't be an empty string");
-  }
+  const userId = userIdFromSession(session);
   console.log(
     `UpdateTxnsTag(userId=${userId}, txnIds=${JSON.stringify(txnIds)}, tag=${tag})`
   );
@@ -446,3 +439,10 @@ export const UpdateTxnsTag = async ({
       )
     );
 };
+
+function userIdFromSession(s: AuthSession): string {
+  if (s === null) {
+    throw new Error("unauthenticated: permission denied");
+  }
+  return s.session.userId;
+}

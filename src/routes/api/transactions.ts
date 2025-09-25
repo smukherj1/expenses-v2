@@ -60,7 +60,7 @@ export const ServerRoute = createServerFileRoute("/api/transactions")
           try {
             while (true) {
               const pageSize = 2000;
-              const result = await GetTxns(context.session.user.id, {
+              const result = await GetTxns(context.session, {
                 ...params,
                 pageSize,
                 next,

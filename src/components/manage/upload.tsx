@@ -57,7 +57,7 @@ const uploadTxns = createServerFn({
     }
     var uploaded = 0;
     try {
-      uploaded = await UploadTxns(context.session.user.id, result.data);
+      uploaded = await UploadTxns(context.session, result.data);
     } catch (error) {
       console.log(`Error uploading transactions: ${error}`);
       throw new Error("Error saving uploaded transactions to the database");

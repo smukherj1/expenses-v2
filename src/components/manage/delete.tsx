@@ -16,7 +16,7 @@ const deleteTxns = createServerFn({
 })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    return DeleteTxns(context.session.user.id);
+    return DeleteTxns(context.session);
   });
 
 export default function Component() {

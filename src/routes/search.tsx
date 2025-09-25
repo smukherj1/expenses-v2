@@ -43,7 +43,7 @@ const GetTxnsServerFn = createServerFn({
     const opts = GetTxnsSearchParamsToOpts(data);
     opts.pageSize =
       opts.pageSize !== undefined ? opts.pageSize : defaultPageSize;
-    return GetTxns(context.session.user.id, opts);
+    return GetTxns(context.session, opts);
   });
 
 const updateTxnsTagSchema = z.object({
@@ -56,7 +56,7 @@ const UpdateTxnsTagServerFn = createServerFn({ method: "POST" })
   .validator(updateTxnsTagSchema)
   .handler(async ({ data, context }) =>
     UpdateTxnsTag({
-      userId: context.session.user.id,
+      session: context.session,
       tag: data.tag,
       txnIds: data.txnIds,
     })
