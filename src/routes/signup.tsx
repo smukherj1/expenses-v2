@@ -118,7 +118,7 @@ function Signup() {
               <SocialLogin />
               <div className="text-center text-sm">
                 Already have an account?{" "}
-                <Link to="/login" className="underline underline-offset-4">
+                <Link to="/" className="underline underline-offset-4">
                   Login
                 </Link>
               </div>

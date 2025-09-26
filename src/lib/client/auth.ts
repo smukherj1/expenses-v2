@@ -7,8 +7,8 @@ export function ensureAuth() {
 
   const { data: session } = authClient.useSession();
   if (session === null) {
-    console.log("User is not logged in, redirecting to login.");
-    router.navigate({ to: "/login" });
+    console.log("User is not logged in, redirecting to home.");
+    router.navigate({ to: "/" });
   }
 }
 

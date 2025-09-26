@@ -14,7 +14,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ManageRouteImport } from './routes/manage'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { ServerRoute as ApiTransactionsServerRouteImport } from './routes/api/transactions'
 import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
@@ -36,11 +35,6 @@ const ManageRoute = ManageRouteImport.update({
   path: '/manage',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -59,14 +53,12 @@ const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
   '/manage': typeof ManageRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
   '/manage': typeof ManageRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
@@ -74,22 +66,20 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
   '/manage': typeof ManageRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/manage' | '/search' | '/signup'
+  fullPaths: '/' | '/manage' | '/search' | '/signup'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/manage' | '/search' | '/signup'
-  id: '__root__' | '/' | '/login' | '/manage' | '/search' | '/signup'
+  to: '/' | '/manage' | '/search' | '/signup'
+  id: '__root__' | '/' | '/manage' | '/search' | '/signup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  LoginRoute: typeof LoginRoute
   ManageRoute: typeof ManageRoute
   SearchRoute: typeof SearchRoute
   SignupRoute: typeof SignupRoute
@@ -143,13 +133,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManageRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -180,7 +163,6 @@ declare module '@tanstack/react-start/server' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  LoginRoute: LoginRoute,
   ManageRoute: ManageRoute,
   SearchRoute: SearchRoute,
   SignupRoute: SignupRoute,

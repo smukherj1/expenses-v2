@@ -1,19 +1,14 @@
 import * as React from "react";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "@tanstack/react-router";
 import SocialLogin from "@/components/social-login";
-import { authClient, ensureNotAuth } from "@/lib/client/auth";
+import { authClient } from "@/lib/client/auth";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-
-export const Route = createFileRoute("/login")({
-  component: RouteComponent,
-});
 
 async function signinEmail({
   email,
@@ -35,12 +30,11 @@ async function signinEmail({
   );
 }
 
-function RouteComponent() {
-  const router = useRouter();
-  const redirectHome = () => router.navigate({ to: "/" });
+export type Props = {
+  onLogin: () => void;
+};
 
-  ensureNotAuth();
-
+export default function Login({ onLogin }: Props) {
   const [email, setEmail] = React.useState<string>("");
   const [password, setPassword] = React.useState<string>("");
   const signinMutator = useMutation({ mutationFn: signinEmail });
@@ -55,7 +49,7 @@ function RouteComponent() {
               signinMutator.mutate({
                 email,
                 password,
-                onSuccess: redirectHome,
+                onSuccess: onLogin,
               });
             }}
           >

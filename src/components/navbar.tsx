@@ -24,7 +24,6 @@ export default function Navbar() {
   // and vice versa.
   const links: linkData[] = [
     { to: "/", name: "Home", reqiresLogin: false },
-    { to: "/login", name: "Login", reqiresLogin: false },
     { to: "/search", name: "Search", reqiresLogin: true },
     { to: "/manage", name: "Manage", reqiresLogin: true },
   ].filter((l) => l.name === "Home" || l.reqiresLogin === loggedIn);
