@@ -50,7 +50,7 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   const [showDevtools, setShowDevtools] = React.useState(false);
-  const loggedIn = Route.useLoaderData() !== null;
+  const session = Route.useLoaderData();
 
   React.useEffect(() => {
     // @ts-expect-error
@@ -60,7 +60,7 @@ function RootComponent() {
     <RootDocument>
       <Toaster richColors position="top-center" />
       <QueryClientProvider client={queryClient}>
-        <Navbar loggedIn={loggedIn} />
+        <Navbar session={session} />
         <Outlet />
         {showDevtools && <ReactQueryDevtools initialIsOpen={false} />}
       </QueryClientProvider>

@@ -6,6 +6,7 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { UserAvatar } from "./avatar";
+import { Session } from "@/lib/auth-shared";
 
 interface linkData {
   to: string;
@@ -14,10 +15,11 @@ interface linkData {
 }
 
 export type Props = {
-  loggedIn: boolean;
+  session: Session | null;
 };
 
-export default function Navbar({ loggedIn }: Props) {
+export default function Navbar({ session }: Props) {
+  const loggedIn = session !== null;
   // We show the link to the home page irrespective of the
   // logged in state. Otherwise we only display a link to a
   // page that requires login only if the user is logged in
@@ -49,7 +51,7 @@ export default function Navbar({ loggedIn }: Props) {
           })}
           {loggedIn && (
             <NavigationMenuItem>
-              <UserAvatar />
+              <UserAvatar user={session.user} />
             </NavigationMenuItem>
           )}
         </NavigationMenuList>

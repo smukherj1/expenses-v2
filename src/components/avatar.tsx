@@ -12,9 +12,13 @@ import { authClient } from "@/lib/client/auth";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
+import { User } from "@/lib/auth-shared";
 
-export function UserAvatar() {
-  const { data: session } = authClient.useSession();
+export type Props = {
+  user: User;
+};
+
+export function UserAvatar({ user }: Props) {
   const router = useRouter();
 
   const redirectHome = () => router.navigate({ to: "/" });
@@ -24,18 +28,15 @@ export function UserAvatar() {
       authClient.signOut({ fetchOptions: { onSuccess: redirectHome } }),
   });
 
-  if (!session) {
-    return null;
-  }
-
-  const { user } = session;
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.image ?? "/user-avatar.svg"} alt={user.name ?? "User"} />
+            <AvatarImage
+              src={user.image ?? "/user-avatar.svg"}
+              alt={user.name ?? "User"}
+            />
             <AvatarFallback>
               {user.name
                 ? user.name
