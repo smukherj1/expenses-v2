@@ -319,7 +319,6 @@ function Search() {
         data={data.txns}
         enableActions
         onRowIdSelectionChange={(rowIds) => {
-          console.log(`Selected row ids: ${JSON.stringify(rowIds)}`);
           // Only update the state if the selection has actually changed.
           // Otherwise, it can create an infinite re-render loop because
           // onRowIdSelectionChange is always called when TransactionsTable
