@@ -21,7 +21,7 @@ import { PaginationState } from "@tanstack/react-table";
 import { DateAsString } from "@/lib/date";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ensureAuth } from "@/lib/client/auth";
+import { ensureLoggedIn } from "@/lib/auth-shared";
 import { authMiddleware } from "@/lib/server/auth";
 
 const defaultPageSize = 25;
@@ -64,6 +64,9 @@ const UpdateTxnsTagServerFn = createServerFn({ method: "POST" })
 
 export const Route = createFileRoute("/search")({
   validateSearch: GetTxnsSearchParamsSchema,
+  beforeLoad: async () => {
+    await ensureLoggedIn();
+  },
   loaderDeps: ({ search }) => {
     return search;
   },
@@ -233,8 +236,6 @@ function SearchOrEditBar({
 }
 
 function Search() {
-  ensureAuth();
-
   const sp = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const data = Route.useLoaderData();

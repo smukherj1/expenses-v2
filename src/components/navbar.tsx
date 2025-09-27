@@ -5,7 +5,6 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { authClient } from "@/lib/client/auth";
 import { UserAvatar } from "./avatar";
 
 interface linkData {
@@ -14,10 +13,11 @@ interface linkData {
   reqiresLogin: boolean;
 }
 
-export default function Navbar() {
-  const { data: session } = authClient.useSession();
-  const loggedIn = session !== null;
+export type Props = {
+  loggedIn: boolean;
+};
 
+export default function Navbar({ loggedIn }: Props) {
   // We show the link to the home page irrespective of the
   // logged in state. Otherwise we only display a link to a
   // page that requires login only if the user is logged in

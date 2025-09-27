@@ -6,11 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { authClient, ensureNotAuth } from "@/lib/client/auth";
+import { authClient } from "@/lib/client/auth";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { ensureNotLoggedIn } from "@/lib/auth-shared";
 
 export const Route = createFileRoute("/signup")({
+  beforeLoad: async () => {
+    await ensureNotLoggedIn();
+  },
   component: Signup,
 });
 
@@ -43,8 +47,6 @@ async function signupEmail({
 function Signup() {
   const router = useRouter();
   const redirectHome = () => router.navigate({ to: "/" });
-
-  ensureNotAuth();
 
   const [email, setEmail] = React.useState<string>("");
   const [password, setPassword] = React.useState<string>("");

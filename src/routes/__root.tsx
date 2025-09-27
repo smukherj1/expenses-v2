@@ -12,6 +12,7 @@ import appCSS from "@/styles/app.css?url";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Toaster } from "@/components/ui/sonner";
+import { getAuthSession } from "@/lib/auth-shared";
 
 // Tanstack Query client.
 const queryClient = new QueryClient();
@@ -32,6 +33,9 @@ export const Route = createRootRoute({
     ],
     links: [{ rel: "stylesheet", href: appCSS }],
   }),
+  loader: async () => {
+    return getAuthSession();
+  },
   component: RootComponent,
   notFoundComponent: DefaultGlobalNotFound,
   errorComponent: (props) => {
@@ -46,6 +50,7 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   const [showDevtools, setShowDevtools] = React.useState(false);
+  const loggedIn = Route.useLoaderData() !== null;
 
   React.useEffect(() => {
     // @ts-expect-error
@@ -55,7 +60,7 @@ function RootComponent() {
     <RootDocument>
       <Toaster richColors position="top-center" />
       <QueryClientProvider client={queryClient}>
-        <Navbar />
+        <Navbar loggedIn={loggedIn} />
         <Outlet />
         {showDevtools && <ReactQueryDevtools initialIsOpen={false} />}
       </QueryClientProvider>
