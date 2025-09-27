@@ -116,14 +116,8 @@ export async function GetTxns(
     .innerJoin(beforeAfterSq, sql`true`)
     .orderBy(asc(pageSq.date), asc(pageSq.id));
 
-  // console.log(
-  //   `Running SQL: ${q.toSQL().sql} with params ${JSON.stringify(q.toSQL().params)}`
-  // );
   const queryResult = await q;
   const result = toTxnResults(queryResult);
-  console.log(
-    `Fetched ${result.txns.length} transactions out of ${result.totalCount}, ${result.beforeCount} txns before, ${result.afterCount} txns after.`
-  );
   return result;
 }
 
@@ -426,9 +420,6 @@ export const UpdateTxnsTag = async ({
   tag: string | null;
 }) => {
   const userId = userIdFromSession(session);
-  console.log(
-    `UpdateTxnsTag(userId=${userId}, txnIds=${JSON.stringify(txnIds)}, tag=${tag})`
-  );
   await db
     .update(transactionsTableV2)
     .set({ tag: tag })

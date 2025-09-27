@@ -262,9 +262,6 @@ function Search() {
   const navigateWithSearchAndPagination = React.useCallback(
     (sbp: SearchBarParams, pgp: PaginationSearchParams) => {
       const newSp = mergeSearchParams(sbp, pgp);
-      console.log(
-        `nagivateWithSearchAndPagination(curSp=${JSON.stringify(sbp)}, pgState=${JSON.stringify(pgp)}}) to newSp=${JSON.stringify(newSp)}`
-      );
       navigate({
         search: () => newSp,
       });
@@ -274,9 +271,6 @@ function Search() {
 
   const onSearchBarChange = React.useCallback(
     (newSbp: SearchBarParams) => {
-      console.log(
-        `onSearchBarChange params=${JSON.stringify(newSbp)}, pgp=${JSON.stringify(pgp)}`
-      );
       // Discard page cursors on search bar parameters changing because those
       // change how the transactions are paginated.
       navigateWithSearchAndPagination(newSbp, { pageSize: pgp.pageSize });
@@ -308,20 +302,11 @@ function Search() {
         curPagState: paginationState,
         newPagState: newPaginationState,
       });
-      console.log(
-        `PaginationState update from ${JSON.stringify(paginationState)}` +
-          `to ${JSON.stringify(newPaginationState)}, ` +
-          `updated sp=${JSON.stringify(newSbp)}, ` +
-          `updated pgState=${JSON.stringify(newPgp)}`
-      );
       navigateWithSearchAndPagination(newSbp, newPgp);
     },
     [data, paginationState, sbp, navigateWithSearchAndPagination]
   );
 
-  console.log(
-    `Rendering search page with pagination state ${JSON.stringify(paginationState)} and ${data.txns.length} transactions.`
-  );
   return (
     <div className="flex flex-col gap-4 p-4">
       <SearchOrEditBar

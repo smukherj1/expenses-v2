@@ -15,10 +15,9 @@ export default function SocialLogin() {
           type="button"
           className="w-full"
           onClick={async () => {
-            const result = await authClient.signIn.social({
+            await authClient.signIn.social({
               provider: "microsoft",
             });
-            console.log(`Auth result: ${JSON.stringify(result)}`);
           }}
         >
           <svg
@@ -39,10 +38,9 @@ export default function SocialLogin() {
           type="button"
           className="w-full"
           onClick={async () => {
-            const result = await authClient.signIn.social({
+            await authClient.signIn.social({
               provider: "google",
             });
-            console.log(`Auth result: ${JSON.stringify(result)}`);
           }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
