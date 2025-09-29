@@ -8,14 +8,16 @@ WORKDIR /app
 FROM base AS install
 RUN mkdir -p /temp/dev
 COPY package.json bun.lock /temp/dev/
-RUN cd /temp/dev && bun install --frozen-lockfile
+# Delete the bun cache after install because it seems to slow down
+# the production install later. Without this, the next install takes 
+# ~70-80s vs 10s when using npm. May be related to
+# https://github.com/oven-sh/bun/issues/10371.
+RUN cd /temp/dev && bun install --frozen-lockfile && rm -rf ~/.bun/install
 
 # install with --production (exclude devDependencies)
 RUN mkdir -p /temp/prod
 COPY package.json bun.lock /temp/prod/
-# The following step is slow: https://github.com/oven-sh/bun/issues/10371
-# Takes ~70-80s vs 10s when using npm.
-RUN cd /temp/prod && bun install --frozen-lockfile --production
+RUN cd /temp/prod && bun install --frozen-lockfile --production --no-cache
 
 # copy node_modules from temp directory
 # then copy all (non-ignored) project files into the image
