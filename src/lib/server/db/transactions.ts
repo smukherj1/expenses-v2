@@ -16,6 +16,7 @@ import {
   count,
   type SQL,
   inArray,
+  sum,
 } from "drizzle-orm";
 import {
   NewTxn,
@@ -27,6 +28,7 @@ import {
   opExc,
   opLte,
   opEq,
+  TxnsTagYear,
 } from "@/lib/transactions";
 import { CannonicalizeDate } from "@/lib/date";
 import { aliasedColumn } from "./utils";
@@ -436,4 +438,23 @@ function userIdFromSession(s: AuthSession): string {
     throw new Error("unauthenticated: permission denied");
   }
   return s.session.userId;
+}
+
+export async function GetTxnsByYearAndTag(
+  session: AuthSession
+): Promise<TxnsTagYear[]> {
+  const userId = userIdFromSession(session);
+  const result = await db
+    .select({
+      year: sql<number>`cast(strftime('%Y', date / 1000, 'unixepoch') as int)`.as(
+        "year"
+      ),
+      tag: transactionsTableV2.tag,
+      amount: sql<number>`sum(${transactionsTableV2.amountCents}) / 100.0`,
+      count: count().as("count"),
+    })
+    .from(transactionsTableV2)
+    .where(eq(transactionsTableV2.userId, userId))
+    .groupBy(sql`year`, transactionsTableV2.tag);
+  return result;
 }

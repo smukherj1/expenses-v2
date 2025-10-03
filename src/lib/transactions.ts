@@ -196,3 +196,81 @@ export function GetTxnsOptsToSearchParams(
 
   return sp;
 }
+
+export interface TxnsTagYear {
+  year: number;
+  tag: string | null;
+  amount: number;
+  count: number;
+}
+
+export interface TxnsTag {
+  tag: string | null;
+  amount: number;
+  count: number;
+}
+
+export function YearsFromTxnsTagYears(data: TxnsTagYear[]): number[] {
+  return Array.from(new Set(data.map((v) => v.year)));
+}
+
+export function AggregateTxnTagYears(data: TxnsTagYear[]): TxnsTag[] {
+  const tag2TxnsTag = data.reduce((acc, item) => {
+    const cur: TxnsTag = acc.get(item.tag) ?? {
+      tag: item.tag,
+      amount: 0,
+      count: 0,
+    };
+    acc.set(item.tag, {
+      tag: cur.tag,
+      amount: cur.amount + item.amount,
+      count: cur.count + item.count,
+    });
+    return acc;
+  }, new Map<string | null, TxnsTag>());
+  return Array.from(tag2TxnsTag.entries().map(([_, val]) => val));
+}
+
+function topTxnTagsByOrder(
+  data: TxnsTag[],
+  cmp: (a: TxnsTag, b: TxnsTag) => number
+): TxnsTag[] {
+  const topX = 5;
+  const sorted = data.toSorted(cmp);
+  sorted.sort(cmp);
+  if (sorted.length <= topX) {
+    return sorted;
+  }
+  const top = sorted.slice(0, topX - 1);
+  const last = sorted.slice(topX - 1, sorted.length).reduce((prev, cur) => {
+    return {
+      amount: prev.amount + cur.amount,
+      count: prev.count + cur.count,
+      tag: "other",
+    };
+  });
+  return [...top, last];
+}
+
+export function TopTxnTagsByCount(data: TxnsTag[]): TxnsTag[] {
+  return topTxnTagsByOrder(data, (a, b) => b.count - a.count);
+}
+
+export function TopTxnTagsByAmount(data: TxnsTag[]): TxnsTag[] {
+  return topTxnTagsByOrder(data, (a, b) => b.amount - a.amount);
+}
+
+// Splits the given list of aggregated transaction data into inflows (i.e., positive amounts)
+// and outflows (i.e., negative amounts). Also updates the polarity of the outflow amounts
+// to be positive.
+export function SplitTxnsByFlow(data: TxnsTagYear[]): {
+  inflow: TxnsTagYear[];
+  outflow: TxnsTagYear[];
+} {
+  return {
+    inflow: data.filter((v) => v.amount >= 0),
+    outflow: data
+      .filter((v) => v.amount < 0)
+      .map((v): TxnsTagYear => ({ ...v, amount: Math.abs(v.amount) })),
+  };
+}

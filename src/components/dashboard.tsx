@@ -1,33 +1,48 @@
-import { type ChartConfig, ChartContainer } from "@/components/ui/chart";
-import { Bar, BarChart } from "recharts";
+import * as React from "react";
+import TransactionsPieChart from "./transactions-pie-chart";
+import {
+  AggregateTxnTagYears,
+  SplitTxnsByFlow,
+  TopTxnTagsByAmount,
+  TopTxnTagsByCount,
+  TxnsTagYear,
+} from "@/lib/transactions";
 
-const chartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
-];
+interface DashboardProps {
+  data: TxnsTagYear[];
+}
 
-const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "var(--chart-1)",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "var(--chart-2)",
-  },
-} satisfies ChartConfig;
-
-export default function Dashboard() {
+export default function Dashboard({ data }: DashboardProps) {
+  const [inflow, outflow, allTxns] = React.useMemo(() => {
+    const allTxns = AggregateTxnTagYears(data);
+    const { inflow, outflow } = SplitTxnsByFlow(data);
+    const [agInflow, agOutFlow] = [
+      AggregateTxnTagYears(inflow),
+      AggregateTxnTagYears(outflow),
+    ];
+    return [
+      TopTxnTagsByAmount(agInflow),
+      TopTxnTagsByAmount(agOutFlow),
+      TopTxnTagsByCount(allTxns),
+    ];
+  }, [data]);
   return (
-    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-      <BarChart accessibilityLayer data={chartData}>
-        <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
-        <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
-      </BarChart>
-    </ChartContainer>
+    <div>
+      <TransactionsPieChart
+        title="Transactions"
+        description="Transactions broken down by tag"
+        data={allTxns}
+      />
+      <TransactionsPieChart
+        title="Expenses"
+        description="Money flowing out of your accounts"
+        data={outflow}
+      />
+      <TransactionsPieChart
+        title="Expenses"
+        description="Money flowing into your accounts"
+        data={inflow}
+      />
+    </div>
   );
 }
