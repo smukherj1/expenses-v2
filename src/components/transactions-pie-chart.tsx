@@ -20,19 +20,21 @@ import { TxnsTag } from "@/lib/transactions";
 
 interface Props {
   title: string;
+  dataKey: "amount" | "count";
   description?: string;
   data: TxnsTag[];
 }
 
 export default function TransactionsPieChart({
   title,
+  dataKey,
   description,
   data,
 }: Props) {
   const [chartData, chartConfig] = React.useMemo(() => {
     const chartData = data.map((item) => ({
       name: item.tag || "uncategorized",
-      total: item.amount,
+      total: dataKey === "amount" ? item.amount : item.count,
       fill: `var(--color-${item.tag || "uncategorized"})`,
     }));
     const config: ChartConfig = {
@@ -48,7 +50,7 @@ export default function TransactionsPieChart({
       };
     });
     return [chartData, config];
-  }, [data]);
+  }, [data, dataKey]);
   return (
     <Card>
       <CardHeader>

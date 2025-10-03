@@ -29,18 +29,21 @@ export default function Dashboard({ data }: DashboardProps) {
   return (
     <div>
       <TransactionsPieChart
-        title="Transactions"
-        description="Transactions broken down by tag"
+        title="All Transactions"
+        dataKey="count"
+        description="All your transactions broken down by tag"
         data={allTxns}
       />
       <TransactionsPieChart
         title="Expenses"
-        description="Money flowing out of your accounts"
+        dataKey="amount"
+        description="Amount of money flowing out of your accounts broken down by tag"
         data={outflow}
       />
       <TransactionsPieChart
-        title="Expenses"
-        description="Money flowing into your accounts"
+        title="Income"
+        dataKey="amount"
+        description="Amount of money flowing into your accounts broken down by tag"
         data={inflow}
       />
     </div>
