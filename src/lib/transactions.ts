@@ -214,6 +214,19 @@ export function YearsFromTxnsTagYears(data: TxnsTagYear[]): number[] {
   return Array.from(new Set(data.map((v) => v.year)));
 }
 
+export function TagsFromTxnsTagYears(data: TxnsTagYear[]): (string | null)[] {
+  return Array.from(new Set(data.map((v) => v.tag)));
+}
+
+export function FilterTxnTagYears(
+  data: TxnsTagYear[],
+  filters: { fromYear: number; toYear: number }
+): TxnsTagYear[] {
+  return data.filter(
+    (v) => v.year >= filters.fromYear && v.year <= filters.toYear
+  );
+}
+
 export function AggregateTxnTagYears(data: TxnsTagYear[]): TxnsTag[] {
   const tag2TxnsTag = data.reduce((acc, item) => {
     const cur: TxnsTag = acc.get(item.tag) ?? {
