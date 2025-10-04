@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import CheckableSelect from "./checkable-select";
+import MultiSelect from "./multi-select";
 
 interface Props {
   data: TxnsTagYear[];
@@ -74,12 +74,6 @@ export default function Dashboard({ data }: Props) {
   // in the UI, aggregate the data across the selected years for all the selected
   // tags and get the top txns by various metrics like expenses, revenue and count
   // broken down by tags.
-  const handleTagSelectionChange = React.useCallback(
-    (values: (string | null)[]) => {
-      setSelectedTags(values);
-    },
-    [setSelectedTags]
-  );
 
   const [inflow, outflow, allTxns] = React.useMemo(() => {
     const filteredTagData = FilterTxnTagYears(yearFilteredData, {
@@ -143,9 +137,9 @@ export default function Dashboard({ data }: Props) {
             </SelectGroup>
           </SelectContent>
         </Select>
-        <CheckableSelect
+        <MultiSelect
           values={tags}
-          onSelectionChanged={handleTagSelectionChange}
+          onSelectionChanged={(values) => setSelectedTags(values)}
           placeholder="Tags"
           id="tags-checkable-select"
         />

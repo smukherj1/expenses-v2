@@ -67,7 +67,7 @@ const selectStyles: StylesConfig<OptionType, true> = {
   }),
 };
 
-export default function CheckableSelect({
+export default function MultiSelect({
   values,
   onSelectionChanged,
   placeholder = "Select values",
@@ -89,7 +89,7 @@ export default function CheckableSelect({
     if (onSelectionChanged) {
       onSelectionChanged(selectedOptions.map((o) => o.value));
     }
-  }, [selectedOptions, onSelectionChanged]);
+  }, [selectedOptions]);
 
   const handleSelectAll = (e: React.MouseEvent) => {
     e.preventDefault();
