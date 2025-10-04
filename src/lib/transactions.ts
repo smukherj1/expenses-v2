@@ -215,16 +215,34 @@ export function YearsFromTxnsTagYears(data: TxnsTagYear[]): number[] {
 }
 
 export function TagsFromTxnsTagYears(data: TxnsTagYear[]): (string | null)[] {
-  return Array.from(new Set(data.map((v) => v.tag)));
+  return Array.from(new Set(data.map((v) => v.tag))).toSorted((a, b) => {
+    // null goes last.
+    if (a === null) {
+      return 1;
+    }
+    if (b === null) {
+      return -1;
+    }
+    return a.localeCompare(b);
+  });
 }
 
 export function FilterTxnTagYears(
   data: TxnsTagYear[],
-  filters: { fromYear: number; toYear: number }
+  filters: { fromYear?: number; toYear?: number; tags?: (string | null)[] }
 ): TxnsTagYear[] {
-  return data.filter(
-    (v) => v.year >= filters.fromYear && v.year <= filters.toYear
-  );
+  return data.filter((v) => {
+    if (filters.fromYear !== undefined && v.year < filters.fromYear) {
+      return false;
+    }
+    if (filters.toYear !== undefined && v.year > filters.toYear) {
+      return false;
+    }
+    if (filters.tags !== undefined && !filters.tags.includes(v.tag)) {
+      return false;
+    }
+    return true;
+  });
 }
 
 export function AggregateTxnTagYears(data: TxnsTagYear[]): TxnsTag[] {

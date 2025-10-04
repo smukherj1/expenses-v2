@@ -19,19 +19,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import CheckableSelect from "./checkable-select";
 
-interface DashboardProps {
+interface Props {
   data: TxnsTagYear[];
 }
 
-export default function Dashboard({ data }: DashboardProps) {
+export default function Dashboard({ data }: Props) {
   // First stage: Compute the unique years and tags the data covers.
-  const [allYears, minYear, maxYear, allTags] = React.useMemo(() => {
+  const [minYear, maxYear] = React.useMemo(() => {
     const allYears = YearsFromTxnsTagYears(data);
     const minYear = Math.min(...allYears);
     const maxYear = Math.max(...allYears);
-    const allTags = TagsFromTxnsTagYears(data);
-    return [allYears, minYear, maxYear, allTags];
+
+    return [minYear, maxYear];
   }, [data]);
 
   // Second stage: Based on the min and max years in the data, initialize
@@ -49,10 +50,34 @@ export default function Dashboard({ data }: DashboardProps) {
     setFromYear(toYear);
   }
 
+  // Third stage: Filter the data based on the from and two years selected
+  // above and also compute all unique tags present in the filtered data.
+  const [yearFilteredData, tags] = React.useMemo(() => {
+    const filtered = FilterTxnTagYears(data, { fromYear, toYear });
+    const tags = TagsFromTxnsTagYears(filtered);
+    return [filtered, tags];
+  }, [data, fromYear, toYear]);
+
+  // Fourth stage: Based on the data filtered to the range of years selected
+  // by the user in the UI, initialize and update the state of the dropdowns
+  // selecting the tags to display for the charts in the dashboard.
+  const [selectedTags, setSelectedTags] =
+    React.useState<(string | null)[]>(tags);
+
+  React.useEffect(() => {
+    setSelectedTags(tags);
+  }, [tags]);
+
+  // Fifth stage: Filter the data based on the tags selected by the user in the
+  // in the UI, aggregate the data across the selected years for all the selected
+  // tags and get the top txns by various metrics like expenses, revenue and count
+  // broken down by tags.
   const [inflow, outflow, allTxns] = React.useMemo(() => {
-    const filteredData = FilterTxnTagYears(data, { fromYear, toYear });
-    const allTxns = AggregateTxnTagYears(filteredData);
-    const { inflow, outflow } = SplitTxnsByFlow(filteredData);
+    const filteredTagData = FilterTxnTagYears(yearFilteredData, {
+      tags: selectedTags,
+    });
+    const allTxns = AggregateTxnTagYears(filteredTagData);
+    const { inflow, outflow } = SplitTxnsByFlow(filteredTagData);
     const [agInflow, agOutFlow] = [
       AggregateTxnTagYears(inflow),
       AggregateTxnTagYears(outflow),
@@ -62,7 +87,7 @@ export default function Dashboard({ data }: DashboardProps) {
       TopTxnTagsByAmount(agOutFlow),
       TopTxnTagsByCount(allTxns),
     ];
-  }, [data, fromYear, toYear]);
+  }, [yearFilteredData, selectedTags]);
 
   return (
     <div>
@@ -109,6 +134,11 @@ export default function Dashboard({ data }: DashboardProps) {
             </SelectGroup>
           </SelectContent>
         </Select>
+        <CheckableSelect
+          values={tags}
+          onSelectionChanged={setSelectedTags}
+          placeholder="Tags"
+        />
       </div>
       <TransactionsPieChart
         title="All Transactions"
