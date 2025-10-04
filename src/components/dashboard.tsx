@@ -64,6 +64,8 @@ export default function Dashboard({ data }: Props) {
   const [selectedTags, setSelectedTags] =
     React.useState<(string | null)[]>(tags);
 
+  // If the computed list of tags changed, e.g, due to selecting a range of years,
+  // update the selection tags back to selecting all the new set of tags.
   React.useEffect(() => {
     setSelectedTags(tags);
   }, [tags]);
@@ -74,7 +76,6 @@ export default function Dashboard({ data }: Props) {
   // broken down by tags.
   const handleTagSelectionChange = React.useCallback(
     (values: (string | null)[]) => {
-      console.log(`Selected tags: ${JSON.stringify(values)}`);
       setSelectedTags(values);
     },
     [setSelectedTags]

@@ -4,16 +4,17 @@ import Select, {
   MenuProps,
   MultiValue,
   OptionProps,
+  StylesConfig,
 } from "react-select";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface Props {
-  id: string;
   values: (string | null)[];
   onSelectionChanged?: (values: (string | null)[]) => void;
   placeholder?: string;
+  id?: string;
 }
 
 function removeNull(s: string | null): string {
@@ -22,11 +23,55 @@ function removeNull(s: string | null): string {
 
 type OptionType = { value: string | null; label: string };
 
+const selectStyles: StylesConfig<OptionType, true> = {
+  control: (base, { isFocused }) => ({
+    ...base,
+    backgroundColor: "oklch(0.129 0.042 264.695)",
+    borderColor: "oklch(1 0 0 / 15%)",
+    borderRadius: "0.625rem",
+    "&:hover": {
+      borderColor: "oklch(1 0 0 / 15%)",
+    },
+    boxShadow: isFocused ? "0 0 0 1px oklch(0.551 0.027 264.364)" : "none",
+  }),
+  menu: (base) => ({
+    ...base,
+    backgroundColor: "oklch(0.208 0.042 265.755)",
+    color: "oklch(0.984 0.003 247.858)",
+    borderRadius: "0.625rem",
+    marginTop: "4px",
+    padding: "4px",
+  }),
+  option: (base, { isFocused, isSelected }) => ({
+    ...base,
+    backgroundColor: "transparent",
+    color: "oklch(0.984 0.003 247.858)",
+    borderRadius: "calc(0.625rem - 4px)",
+    cursor: "pointer",
+    "&:active": {
+      backgroundColor: "transparent",
+      color: "oklch(0.984 0.003 247.858)",
+    },
+  }),
+  input: (base) => ({
+    ...base,
+    color: "oklch(0.984 0.003 247.858)",
+  }),
+  placeholder: (base) => ({
+    ...base,
+    color: "oklch(0.704 0.04 256.788)",
+  }),
+  valueContainer: (base) => ({
+    ...base,
+    padding: "6px 12px",
+  }),
+};
+
 export default function CheckableSelect({
   values,
   onSelectionChanged,
   placeholder = "Select values",
-  id: instanceId,
+  id,
 }: Props) {
   const options = React.useMemo(
     () => values.map((v) => ({ value: v, label: removeNull(v) })),
@@ -113,7 +158,8 @@ export default function CheckableSelect({
         }}
         controlShouldRenderValue={false}
         placeholder={`${placeholder}: ${getDisplayValue()}`}
-        instanceId={instanceId}
+        instanceId={id}
+        styles={selectStyles}
       />
     </div>
   );
