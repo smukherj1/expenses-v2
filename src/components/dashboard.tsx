@@ -72,6 +72,14 @@ export default function Dashboard({ data }: Props) {
   // in the UI, aggregate the data across the selected years for all the selected
   // tags and get the top txns by various metrics like expenses, revenue and count
   // broken down by tags.
+  const handleTagSelectionChange = React.useCallback(
+    (values: (string | null)[]) => {
+      console.log(`Selected tags: ${JSON.stringify(values)}`);
+      setSelectedTags(values);
+    },
+    [setSelectedTags]
+  );
+
   const [inflow, outflow, allTxns] = React.useMemo(() => {
     const filteredTagData = FilterTxnTagYears(yearFilteredData, {
       tags: selectedTags,
@@ -136,8 +144,9 @@ export default function Dashboard({ data }: Props) {
         </Select>
         <CheckableSelect
           values={tags}
-          onSelectionChanged={setSelectedTags}
+          onSelectionChanged={handleTagSelectionChange}
           placeholder="Tags"
+          id="tags-checkable-select"
         />
       </div>
       <TransactionsPieChart
