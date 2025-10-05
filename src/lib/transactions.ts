@@ -273,14 +273,16 @@ function topTxnTagsByOrder(
     return sorted;
   }
   const top = sorted.slice(0, topX - 1);
-  const last = sorted.slice(topX - 1, sorted.length).reduce((prev, cur) => {
-    return {
-      amount: prev.amount + cur.amount,
-      count: prev.count + cur.count,
-      tag: "other",
-    };
-  });
-  return [...top, last];
+  const remaining = sorted
+    .slice(topX - 1, sorted.length)
+    .reduce((prev, cur) => {
+      return {
+        amount: prev.amount + cur.amount,
+        count: prev.count + cur.count,
+        tag: "other",
+      };
+    });
+  return [...top, remaining];
 }
 
 export function TopTxnTagsByCount(data: TxnsTag[]): TxnsTag[] {
@@ -289,6 +291,56 @@ export function TopTxnTagsByCount(data: TxnsTag[]): TxnsTag[] {
 
 export function TopTxnTagsByAmount(data: TxnsTag[]): TxnsTag[] {
   return topTxnTagsByOrder(data, (a, b) => b.amount - a.amount);
+}
+
+function topTagsByAmount(data: TxnsTagYear[]): (string | null)[] {
+  const amountByTag = data.reduce((acc, cur) => {
+    const amount = acc.get(cur.tag) ?? 0;
+    acc.set(cur.tag, amount + cur.amount);
+    return acc;
+  }, new Map<string | null, number>());
+
+  return amountByTag
+    .entries()
+    .map(([tag, amount]) => {
+      return { tag, amount };
+    })
+    .toArray()
+    .toSorted((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
+    .splice(0, 5)
+    .map((v) => v.tag);
+}
+
+export function TopTxnTagYearsByAmount(data: TxnsTagYear[]): TxnsTagYear[] {
+  const byYear = data.reduce((acc, cur) => {
+    const values = acc.get(cur.year) ?? new Array<TxnsTagYear>();
+    values.push(cur);
+    acc.set(cur.year, values);
+    return acc;
+  }, new Map<number, TxnsTagYear[]>());
+  const topTags = topTagsByAmount(data);
+  const topByYear = new Map<number, TxnsTagYear[]>();
+  for (const [year, values] of byYear) {
+    const topValues = values.filter((v) => topTags.includes(v.tag));
+    const remaining = values
+      .filter((v) => !topTags.includes(v.tag))
+      .reduce(
+        (acc, cur) => {
+          return {
+            year,
+            tag: "other",
+            amount: acc.amount + cur.amount,
+            count: acc.count + cur.count,
+          };
+        },
+        { year, amount: 0, count: 0, tag: "other" }
+      );
+    topByYear.set(year, [...topValues, remaining]);
+  }
+  return topByYear.values().reduce((acc, values) => {
+    acc.push(...values);
+    return acc;
+  }, new Array<TxnsTagYear>());
 }
 
 // Splits the given list of aggregated transaction data into inflows (i.e., positive amounts)

@@ -7,6 +7,7 @@ import {
   TagsFromTxnsTagYears,
   TopTxnTagsByAmount,
   TopTxnTagsByCount,
+  TopTxnTagYearsByAmount,
   TxnsTagYear,
   YearsFromTxnsTagYears,
 } from "@/lib/transactions";
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import MultiSelect from "./multi-select";
+import TransactionsBarChart from "./transactions-bar-chart";
 
 interface Props {
   data: TxnsTagYear[];
@@ -76,22 +78,25 @@ export default function Dashboard({ data }: Props) {
   // tags and get the top txns by various metrics like expenses, revenue and count
   // broken down by tags.
 
-  const [inflow, outflow, allTxns] = React.useMemo(() => {
-    const filteredTagData = FilterTxnTagYears(yearFilteredData, {
-      tags: selectedTags,
-    });
-    const allTxns = AggregateTxnTagYears(filteredTagData);
-    const { inflow, outflow } = SplitTxnsByFlow(filteredTagData);
-    const [agInflow, agOutFlow] = [
-      AggregateTxnTagYears(inflow),
-      AggregateTxnTagYears(outflow),
-    ];
-    return [
-      TopTxnTagsByAmount(agInflow),
-      TopTxnTagsByAmount(agOutFlow),
-      TopTxnTagsByCount(allTxns),
-    ];
-  }, [yearFilteredData, selectedTags]);
+  const [inflow, outflow, allTxns, inflowYearly, outflowYearly] =
+    React.useMemo(() => {
+      const filteredTagData = FilterTxnTagYears(yearFilteredData, {
+        tags: selectedTags,
+      });
+      const allTxns = AggregateTxnTagYears(filteredTagData);
+      const { inflow, outflow } = SplitTxnsByFlow(filteredTagData);
+      const [agInflow, agOutFlow] = [
+        AggregateTxnTagYears(inflow),
+        AggregateTxnTagYears(outflow),
+      ];
+      return [
+        TopTxnTagsByAmount(agInflow),
+        TopTxnTagsByAmount(agOutFlow),
+        TopTxnTagsByCount(allTxns),
+        TopTxnTagYearsByAmount(inflow),
+        TopTxnTagYearsByAmount(outflow),
+      ];
+    }, [yearFilteredData, selectedTags]);
 
   return (
     <div>
@@ -159,6 +164,12 @@ export default function Dashboard({ data }: Props) {
         dataKey="count"
         description="All your transactions broken down by tag"
         data={allTxns}
+      />
+      <TransactionsBarChart
+        title="All Transactions"
+        description="All your transactions by year broken down by tag"
+        inflowData={inflowYearly}
+        outflowData={outflowYearly}
       />
       <TransactionsPieChart
         title="Expenses"
