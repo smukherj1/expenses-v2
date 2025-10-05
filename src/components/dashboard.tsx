@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import MultiSelect from "./multi-select";
 
 interface Props {
@@ -94,55 +95,64 @@ export default function Dashboard({ data }: Props) {
 
   return (
     <div>
-      <div className="my-4 flex flex-row gap-4">
-        <Select
-          value={fromYear.toString()}
-          onValueChange={(v) => setFromYear(parseInt(v, 10))}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="From Year" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>From</SelectLabel>
-              {Array.from(
-                { length: toYear - minYear + 1 },
-                (_, i) => minYear + i
-              ).map((year) => (
-                <SelectItem key={`from-${year}`} value={year.toString()}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-        <Select
-          value={toYear.toString()}
-          onValueChange={(v) => setToYear(parseInt(v, 10))}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="To Year" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>To</SelectLabel>
-              {Array.from(
-                { length: maxYear - fromYear + 1 },
-                (_, i) => fromYear + i
-              ).map((year) => (
-                <SelectItem key={`to-${year}`} value={year.toString()}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-        <MultiSelect
-          values={tags}
-          onSelectionChanged={(values) => setSelectedTags(values)}
-          placeholder="Tags"
-          id="tags-checkable-select"
-        />
+      <div className="my-4 flex flex-row items-end gap-4 m-2">
+        <div className="grid w-[180px] gap-1.5">
+          <Label>From</Label>
+          <Select
+            value={fromYear.toString()}
+            onValueChange={(v) => setFromYear(parseInt(v, 10))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="From Year" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>From</SelectLabel>
+                {Array.from(
+                  { length: toYear - minYear + 1 },
+                  (_, i) => minYear + i
+                ).map((year) => (
+                  <SelectItem key={`from-${year}`} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid w-[180px] gap-1.5">
+          <Label>To</Label>
+          <Select
+            value={toYear.toString()}
+            onValueChange={(v) => setToYear(parseInt(v, 10))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="To Year" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>To</SelectLabel>
+                {Array.from(
+                  { length: maxYear - fromYear + 1 },
+                  (_, i) => fromYear + i
+                ).map((year) => (
+                  <SelectItem key={`to-${year}`} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid w-full gap-1.5">
+          <Label>Tags</Label>
+          <MultiSelect
+            values={tags}
+            onSelectionChanged={(values) => setSelectedTags(values)}
+            placeholder="Tags"
+            id="tags-checkable-select"
+          />
+        </div>
       </div>
       <TransactionsPieChart
         title="All Transactions"

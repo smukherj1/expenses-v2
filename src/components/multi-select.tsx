@@ -30,6 +30,7 @@ const selectStyles: StylesConfig<OptionType, true> = {
     alignItems: "center", // vertically center text
     fontSize: "0.875rem", // tailwind text-sm
     lineHeight: "1.25rem", // matches ShadCN
+    color: "oklch(0.984 0.003 247.858)",
     minHeight: "36px",
     height: "36px",
     backgroundColor: "oklab(1 0 0 / 0.045)",
@@ -65,7 +66,7 @@ const selectStyles: StylesConfig<OptionType, true> = {
   }),
   placeholder: (base) => ({
     ...base,
-    color: "oklch(0.704 0.04 256.788)",
+    color: "oklch(0.984 0.003 247.858)",
   }),
   valueContainer: (base) => ({
     ...base,
@@ -164,7 +165,7 @@ export default function MultiSelect({
           IndicatorSeparator: () => null,
         }}
         controlShouldRenderValue={false}
-        placeholder={`${placeholder}: ${getDisplayValue()}`}
+        placeholder={getDisplayValue()}
         instanceId={id}
         styles={selectStyles}
       />
