@@ -26,7 +26,13 @@ type OptionType = { value: string | null; label: string };
 const selectStyles: StylesConfig<OptionType, true> = {
   control: (base, { isFocused }) => ({
     ...base,
-    backgroundColor: "oklch(0.129 0.042 264.695)",
+    display: "flex",
+    alignItems: "center", // vertically center text
+    fontSize: "0.875rem", // tailwind text-sm
+    lineHeight: "1.25rem", // matches ShadCN
+    minHeight: "36px",
+    height: "36px",
+    backgroundColor: "oklab(1 0 0 / 0.045)",
     borderColor: "oklch(1 0 0 / 15%)",
     borderRadius: "0.625rem",
     "&:hover": {
@@ -155,6 +161,7 @@ export default function MultiSelect({
         components={{
           Option: CustomOption,
           Menu: CustomMenu,
+          IndicatorSeparator: () => null,
         }}
         controlShouldRenderValue={false}
         placeholder={`${placeholder}: ${getDisplayValue()}`}
