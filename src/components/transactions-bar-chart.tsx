@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   Card,
   CardContent,
@@ -20,26 +20,15 @@ import { TxnsTagYear } from "@/lib/transactions";
 interface Props {
   title: string;
   description: string;
-  inflowData: TxnsTagYear[];
-  outflowData: TxnsTagYear[];
+  data: TxnsTagYear[];
 }
 
 export default function TransactionsBarChart({
   title,
   description,
-  inflowData,
-  outflowData,
+  data,
 }: Props) {
   const [chartData, chartConfig] = React.useMemo(() => {
-    const data = [
-      ...inflowData.map((v) => {
-        return { ...v, amount: Math.abs(v.amount) };
-      }),
-      ...outflowData.map((v) => {
-        return { ...v, amount: -Math.abs(v.amount) };
-      }),
-    ];
-    console.log(`BarChart data: ${JSON.stringify(data)}`);
     const amountsByTagsByYears = data.reduce((acc, cur) => {
       const amountsByTags = acc.get(cur.year) ?? new Map<string, number>();
       const tag = cur.tag || "uncategorized";
@@ -57,7 +46,6 @@ export default function TransactionsBarChart({
         tags.forEach((tag) => {
           const a = amountsByTag.get(tag) ?? 0;
           yearData[tag] = a;
-          console.log(`Set year=${year}, tag=${tag}, amount=${a}`);
         });
         return yearData;
       })
@@ -67,14 +55,12 @@ export default function TransactionsBarChart({
     tags.forEach((tag, index) => {
       config[tag] = {
         label: tag.charAt(0).toUpperCase() + tag.slice(1),
-        color: `hsl(var(--chart-${(index % 5) + 1}))`,
+        color: `var(--chart-${(index % 5) + 1})`,
       };
     });
 
     return [chartData, config];
-  }, [inflowData, outflowData]);
-  console.log(`Computed chartData=${JSON.stringify(chartData)}`);
-  console.log(`Computed chartConfig=${JSON.stringify(chartConfig)}`);
+  }, [data]);
 
   return (
     <Card>
@@ -83,8 +69,14 @@ export default function TransactionsBarChart({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig}>
-          <BarChart accessibilityLayer data={chartData}>
+        <ChartContainer config={chartConfig} className="w-full h-[300px]">
+          <BarChart
+            accessibilityLayer
+            data={chartData}
+            height={300}
+            barSize={40}
+            barCategoryGap="10%"
+          >
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="year"
@@ -93,6 +85,7 @@ export default function TransactionsBarChart({
               axisLine={false}
               tickFormatter={(value) => String(value)}
             />
+            <YAxis tickLine={false} axisLine={false} />
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent hideLabel />}
@@ -104,6 +97,7 @@ export default function TransactionsBarChart({
                 dataKey={key}
                 stackId="a"
                 fill={`var(--color-${key})`}
+                radius={[4, 4, 0, 0]}
               />
             ))}
           </BarChart>

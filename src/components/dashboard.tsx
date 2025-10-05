@@ -166,10 +166,14 @@ export default function Dashboard({ data }: Props) {
         data={allTxns}
       />
       <TransactionsBarChart
-        title="All Transactions"
-        description="All your transactions by year broken down by tag"
-        inflowData={inflowYearly}
-        outflowData={outflowYearly}
+        title="Yearly Inflow"
+        description="Money flowing into your accounts by year broken down by tag"
+        data={inflowYearly}
+      />
+      <TransactionsBarChart
+        title="Yearly Expenses"
+        description="Money flowing out of your accounts by year broken down by tag"
+        data={outflowYearly}
       />
       <TransactionsPieChart
         title="Expenses"
