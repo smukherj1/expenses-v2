@@ -197,6 +197,14 @@ export function GetTxnsOptsToSearchParams(
   return sp;
 }
 
+export interface TxnsTagYearInst {
+  institution: string;
+  year: number;
+  tag: string | null;
+  amount: number;
+  count: number;
+}
+
 export interface TxnsTagYear {
   year: number;
   tag: string | null;
@@ -227,22 +235,51 @@ export function TagsFromTxnsTagYears(data: TxnsTagYear[]): (string | null)[] {
   });
 }
 
-export function FilterTxnTagYears(
-  data: TxnsTagYear[],
-  filters: { fromYear?: number; toYear?: number; tags?: (string | null)[] }
+export function InstitutionsFromTxnsTagYearInsts(
+  data: TxnsTagYearInst[]
+): string[] {
+  return Array.from(new Set(data.map((v) => v.institution)));
+}
+
+export function AggregateTxnsTagYearInsts(
+  data: TxnsTagYearInst[]
 ): TxnsTagYear[] {
-  return data.filter((v) => {
-    if (filters.fromYear !== undefined && v.year < filters.fromYear) {
-      return false;
-    }
-    if (filters.toYear !== undefined && v.year > filters.toYear) {
-      return false;
-    }
-    if (filters.tags !== undefined && !filters.tags.includes(v.tag)) {
-      return false;
-    }
-    return true;
-  });
+  const byInst = data.reduce((acc, cur) => {
+    const vals = acc.get(cur.institution) ?? new Array<TxnsTagYear>();
+    vals.push({
+      year: cur.year,
+      tag: cur.tag,
+      amount: cur.amount,
+      count: cur.count,
+    });
+    acc.set(cur.institution, vals);
+    return acc;
+  }, new Map<string, TxnsTagYear[]>());
+  return byInst.values().reduce((acc, cur) => {
+    acc.push(...cur);
+    return acc;
+  }, new Array<TxnsTagYear>());
+}
+
+export function FilterTxnInstitutions(
+  data: TxnsTagYearInst[],
+  institutions: string[]
+): TxnsTagYearInst[] {
+  return data.filter((v) => institutions.includes(v.institution));
+}
+
+export function FilterTxnYears(
+  data: TxnsTagYearInst[],
+  { fromYear, toYear }: { fromYear: number; toYear: number }
+): TxnsTagYearInst[] {
+  return data.filter((v) => v.year >= fromYear && v.year <= toYear);
+}
+
+export function FilterTxnTags(
+  data: TxnsTagYearInst[],
+  { tags }: { tags: (string | null)[] }
+): TxnsTagYearInst[] {
+  return data.filter((v) => tags.includes(v.tag));
 }
 
 export function AggregateTxnTagYears(data: TxnsTagYear[]): TxnsTag[] {

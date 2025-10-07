@@ -16,7 +16,6 @@ import {
   count,
   type SQL,
   inArray,
-  sum,
 } from "drizzle-orm";
 import {
   NewTxn,
@@ -28,7 +27,7 @@ import {
   opExc,
   opLte,
   opEq,
-  TxnsTagYear,
+  TxnsTagYearInst,
 } from "@/lib/transactions";
 import { CannonicalizeDate } from "@/lib/date";
 import { aliasedColumn } from "./utils";
@@ -442,19 +441,24 @@ function userIdFromSession(s: AuthSession): string {
 
 export async function GetTxnsByYearAndTag(
   session: AuthSession
-): Promise<TxnsTagYear[]> {
+): Promise<TxnsTagYearInst[]> {
   const userId = userIdFromSession(session);
   const result = await db
     .select({
       year: sql<number>`cast(strftime('%Y', date / 1000, 'unixepoch') as int)`.as(
         "year"
       ),
+      institution: transactionsTableV2.institution,
       tag: transactionsTableV2.tag,
       amount: sql<number>`sum(${transactionsTableV2.amountCents}) / 100.0`,
       count: count().as("count"),
     })
     .from(transactionsTableV2)
     .where(eq(transactionsTableV2.userId, userId))
-    .groupBy(sql`year`, transactionsTableV2.tag);
+    .groupBy(
+      sql`year`,
+      transactionsTableV2.institution,
+      transactionsTableV2.tag
+    );
   return result;
 }
