@@ -20,4 +20,12 @@ GOOGLE_OAUTH_CLIENT_SECRET=""
 # skipped if you don't plan to use Microsoft login.
 MICROSOFT_OAUTH_CLIENT_ID=""
 MICROSOFT_OAUTH_CLIENT_SECRET=""
+
+# Postgres
+POSTGRES_DB="expenses"
+POSTGRES_USER="expenses-server"
+# Password generated with openssl rand -hex 32
+POSTGRES_PASSWORD=""
+# Should be in the format postgresql://username:password@localhost:5432/database_name
+POSTGRES_URL="postgresql://username:password@localhost:5432/database_name"
 ```

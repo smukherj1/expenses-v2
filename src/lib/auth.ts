@@ -3,7 +3,7 @@
 // to see it.
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { db } from "@/lib/server/db/client";
+import { db } from "@/lib/server/db/pg-client";
 import {
   user,
   session,
@@ -13,7 +13,7 @@ import {
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
-    provider: "sqlite",
+    provider: "pg",
     schema: {
       user,
       session,

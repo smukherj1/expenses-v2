@@ -36,8 +36,8 @@ export default function Dashboard({ data }: Props) {
   // First stage: Compute the unique years the data covers.
   const [minYear, maxYear] = React.useMemo(() => {
     const allYears = YearsFromTxnsTagYears(data);
-    const minYear = Math.min(...allYears);
-    const maxYear = Math.max(...allYears);
+    const minYear = allYears.length > 0 ? Math.min(...allYears) : 2010;
+    const maxYear = allYears.length > 0 ? Math.max(...allYears) : 2010;
 
     return [minYear, maxYear];
   }, [data]);

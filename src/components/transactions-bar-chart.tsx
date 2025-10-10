@@ -49,7 +49,8 @@ export default function TransactionsBarChart({
         });
         return yearData;
       })
-      .toArray();
+      .toArray()
+      .toSorted((a, b) => a.year - b.year);
 
     const config: ChartConfig = {};
     tags.forEach((tag, index) => {

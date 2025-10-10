@@ -1,5 +1,5 @@
-import { db } from "./client";
-import { transactionsTableV2 } from "./schema/transactions";
+import { db } from "./pg-client";
+import { transactionsTable } from "./schema/transactions";
 import {
   and,
   asc,
@@ -35,19 +35,22 @@ import { AuthSession } from "@/lib/auth";
 
 export async function UploadTxns(session: AuthSession, txns: NewTxn[]) {
   const userId = userIdFromSession(session);
-  const result = await db.insert(transactionsTableV2).values(
-    txns.map((t) => {
-      return {
-        userId: userId,
-        date: CannonicalizeDate(t.date).getTime(),
-        desc: t.description,
-        amountCents: Math.round(parseFloat(t.amount) * 100),
-        institution: t.institution,
-        tag: t.tag,
-      };
-    })
-  );
-  return result.rowsAffected;
+  const result = await db
+    .insert(transactionsTable)
+    .values(
+      txns.map((t) => {
+        return {
+          userId: userId,
+          date: CannonicalizeDate(t.date),
+          desc: t.description,
+          amountCents: Math.round(parseFloat(t.amount) * 100),
+          institution: t.institution,
+          tag: t.tag,
+        };
+      })
+    )
+    .returning({ id: transactionsTable.id });
+  return result.length;
 }
 
 const DefaultGetTxnOpts = {
@@ -60,15 +63,15 @@ const DefaultGetTxnOpts = {
 
 interface fetchedTxn {
   id: number;
-  date: number;
+  date: Date;
   desc: string;
   amountCents: number;
   institution: string;
   tag: string | null;
   totalPages: number;
-  nextDate: number;
+  nextDate: Date;
   nextId: number;
-  prevDate: number;
+  prevDate: Date;
   prevId: number;
   beforeCount: number;
   afterCount: number;
@@ -127,7 +130,7 @@ function buildCountSubquery(allPagesConditions: SQL[]) {
   // bar parameters across all pages.
   const countQ = db
     .select({ count: count().as("count") })
-    .from(transactionsTableV2)
+    .from(transactionsTable)
     .where(and(...allPagesConditions));
   return db.$with("countSq").as(countQ);
 }
@@ -137,7 +140,7 @@ function buildPageSubquery(opts: GetTxnsOpts, allPagesConditions: SQL[]) {
   // by the cursors. If there are no cursors, we select the first page.
   const baseQ = db
     .select()
-    .from(transactionsTableV2)
+    .from(transactionsTable)
     .where(
       and(
         ...allPagesConditions,
@@ -145,11 +148,8 @@ function buildPageSubquery(opts: GetTxnsOpts, allPagesConditions: SQL[]) {
       )
     );
   const qWithOrder = opts.prev
-    ? baseQ.orderBy(
-        desc(transactionsTableV2.date),
-        desc(transactionsTableV2.id)
-      )
-    : baseQ.orderBy(asc(transactionsTableV2.date), asc(transactionsTableV2.id));
+    ? baseQ.orderBy(desc(transactionsTable.date), desc(transactionsTable.id))
+    : baseQ.orderBy(asc(transactionsTable.date), asc(transactionsTable.id));
 
   const limit = opts.pageSize > 0 ? opts.pageSize : undefined;
   const qWithLimit = limit ? qWithOrder.limit(limit) : qWithOrder;
@@ -222,16 +222,16 @@ function countTxnsBeforeAndAfterSubquery(
     .select({
       beforeCount: count().as("beforeCount"),
     })
-    .from(transactionsTableV2)
+    .from(transactionsTable)
     .innerJoin(cursorsSq, sql`true`)
     .where(
       and(
         ...pageConditions,
         or(
-          lt(transactionsTableV2.date, cursorsSq.prevDate),
+          lt(transactionsTable.date, cursorsSq.prevDate),
           and(
-            eq(transactionsTableV2.date, cursorsSq.prevDate),
-            lt(transactionsTableV2.id, cursorsSq.prevId)
+            eq(transactionsTable.date, cursorsSq.prevDate),
+            lt(transactionsTable.id, cursorsSq.prevId)
           )
         )
       )
@@ -242,16 +242,16 @@ function countTxnsBeforeAndAfterSubquery(
     .select({
       afterCount: count().as("afterCount"),
     })
-    .from(transactionsTableV2)
+    .from(transactionsTable)
     .innerJoin(cursorsSq, sql`true`)
     .where(
       and(
         ...pageConditions,
         or(
-          gt(transactionsTableV2.date, cursorsSq.nextDate),
+          gt(transactionsTable.date, cursorsSq.nextDate),
           and(
-            eq(transactionsTableV2.date, cursorsSq.nextDate),
-            gt(transactionsTableV2.id, cursorsSq.nextId)
+            eq(transactionsTable.date, cursorsSq.nextDate),
+            gt(transactionsTable.id, cursorsSq.nextId)
           )
         )
       )
@@ -335,16 +335,16 @@ function validateOptsOrThrow(popts: Partial<GetTxnsOpts>): GetTxnsOpts {
 // Conditions that select transactions across all pages.
 function allPagesConditionsFromOpts(userId: string, opts: GetTxnsOpts): SQL[] {
   const result: SQL[] = [
-    eq(transactionsTableV2.userId, userId),
-    gte(transactionsTableV2.date, opts.from.getTime()),
-    lte(transactionsTableV2.date, opts.to.getTime()),
+    eq(transactionsTable.userId, userId),
+    gte(transactionsTable.date, opts.from),
+    lte(transactionsTable.date, opts.to),
   ];
   if (opts.desc && opts.descOp) {
     const desc = `%${opts.desc.toLowerCase()}%`;
     if (opts.descOp === opInc) {
-      result.push(like(transactionsTableV2.desc, desc));
+      result.push(like(transactionsTable.desc, desc));
     } else if (opts.descOp === opExc) {
-      result.push(notLike(transactionsTableV2.desc, desc));
+      result.push(notLike(transactionsTable.desc, desc));
     } else {
       console.error(`Ignoring unknown description match op: ${opts.descOp}`);
     }
@@ -353,11 +353,11 @@ function allPagesConditionsFromOpts(userId: string, opts: GetTxnsOpts): SQL[] {
   if (opts.amount && opts.amountOp) {
     const amountCents = opts.amount * 100;
     if (opts.amountOp === opGte) {
-      result.push(gte(transactionsTableV2.amountCents, amountCents));
+      result.push(gte(transactionsTable.amountCents, amountCents));
     } else if (opts.amountOp === opLte) {
-      result.push(lte(transactionsTableV2.amountCents, amountCents));
+      result.push(lte(transactionsTable.amountCents, amountCents));
     } else if (opts.amountOp === opEq) {
-      result.push(eq(transactionsTableV2.amountCents, amountCents));
+      result.push(eq(transactionsTable.amountCents, amountCents));
     } else {
       console.error(`Ignoring unknown amount match op: ${opts.amountOp}`);
     }
@@ -366,9 +366,9 @@ function allPagesConditionsFromOpts(userId: string, opts: GetTxnsOpts): SQL[] {
   if (opts.inst && opts.instOp) {
     const inst = `%${opts.inst.toLowerCase()}%`;
     if (opts.instOp === opInc) {
-      result.push(like(transactionsTableV2.institution, inst));
+      result.push(like(transactionsTable.institution, inst));
     } else if (opts.instOp === opExc) {
-      result.push(notLike(transactionsTableV2.institution, inst));
+      result.push(notLike(transactionsTable.institution, inst));
     } else {
       console.error(`Ignoring unknown institution match op: ${opts.instOp}`);
     }
@@ -385,19 +385,19 @@ function pageConditions({
 }): SQL | undefined {
   if (next) {
     return or(
-      gt(transactionsTableV2.date, next.date.getTime()),
+      gt(transactionsTable.date, next.date),
       and(
-        eq(transactionsTableV2.date, next.date.getTime()),
-        gt(transactionsTableV2.id, next.id)
+        eq(transactionsTable.date, next.date),
+        gt(transactionsTable.id, next.id)
       )
     );
   }
   if (prev) {
     return or(
-      lt(transactionsTableV2.date, prev.date.getTime()),
+      lt(transactionsTable.date, prev.date),
       and(
-        eq(transactionsTableV2.date, prev.date.getTime()),
-        lt(transactionsTableV2.id, prev.id)
+        eq(transactionsTable.date, prev.date),
+        lt(transactionsTable.id, prev.id)
       )
     );
   }
@@ -406,9 +406,10 @@ function pageConditions({
 export async function DeleteTxns(session: AuthSession) {
   const userId = userIdFromSession(session);
   const result = await db
-    .delete(transactionsTableV2)
-    .where(eq(transactionsTableV2.userId, userId));
-  return result.rowsAffected;
+    .delete(transactionsTable)
+    .where(eq(transactionsTable.userId, userId))
+    .returning({ id: transactionsTable.id });
+  return result.length;
 }
 
 export const UpdateTxnsTag = async ({
@@ -422,12 +423,12 @@ export const UpdateTxnsTag = async ({
 }) => {
   const userId = userIdFromSession(session);
   await db
-    .update(transactionsTableV2)
+    .update(transactionsTable)
     .set({ tag: tag })
     .where(
       and(
-        eq(transactionsTableV2.userId, userId),
-        inArray(transactionsTableV2.id, txnIds)
+        eq(transactionsTable.userId, userId),
+        inArray(transactionsTable.id, txnIds)
       )
     );
 };
@@ -445,20 +446,16 @@ export async function GetTxnsByYearAndTag(
   const userId = userIdFromSession(session);
   const result = await db
     .select({
-      year: sql<number>`cast(strftime('%Y', date / 1000, 'unixepoch') as int)`.as(
+      year: sql<number>`EXTRACT(YEAR FROM ${transactionsTable.date})`.as(
         "year"
       ),
-      institution: transactionsTableV2.institution,
-      tag: transactionsTableV2.tag,
-      amount: sql<number>`sum(${transactionsTableV2.amountCents}) / 100.0`,
+      institution: transactionsTable.institution,
+      tag: transactionsTable.tag,
+      amount: sql<number>`sum(${transactionsTable.amountCents}) / 100.0`,
       count: count().as("count"),
     })
-    .from(transactionsTableV2)
-    .where(eq(transactionsTableV2.userId, userId))
-    .groupBy(
-      sql`year`,
-      transactionsTableV2.institution,
-      transactionsTableV2.tag
-    );
+    .from(transactionsTable)
+    .where(eq(transactionsTable.userId, userId))
+    .groupBy(sql`year`, transactionsTable.institution, transactionsTable.tag);
   return result;
 }
