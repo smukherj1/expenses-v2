@@ -15,7 +15,7 @@ services:
       - backend
 
   expenses-server:
-    image: expenses-v2:latest
+    image: ghcr.io/smukherj1/expenses-v2:main
     env_file:
       - path: ./.env
         required: true
