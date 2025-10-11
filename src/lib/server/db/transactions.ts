@@ -446,12 +446,12 @@ export async function GetTxnsByYearAndTag(
   const userId = userIdFromSession(session);
   const result = await db
     .select({
-      year: sql<number>`EXTRACT(YEAR FROM ${transactionsTable.date})`.as(
+      year: sql<number>`CAST(EXTRACT(YEAR FROM ${transactionsTable.date}) AS INT)`.as(
         "year"
       ),
       institution: transactionsTable.institution,
       tag: transactionsTable.tag,
-      amount: sql<number>`sum(${transactionsTable.amountCents}) / 100.0`,
+      amount: sql<number>`CAST(sum(${transactionsTable.amountCents}) / 100.0 AS INT)`,
       count: count().as("count"),
     })
     .from(transactionsTable)
