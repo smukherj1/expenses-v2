@@ -22,10 +22,11 @@ MICROSOFT_OAUTH_CLIENT_ID=""
 MICROSOFT_OAUTH_CLIENT_SECRET=""
 
 # Postgres
-POSTGRES_DB="expenses"
-POSTGRES_USER="expenses-server"
+POSTGRES_USER=""
+POSTGRES_ADDR="db"
+POSTGRES_DB=""
 # Password generated with openssl rand -hex 32
 POSTGRES_PASSWORD=""
 # Should be in the format postgresql://username:password@localhost:5432/database_name
-POSTGRES_URL="postgresql://username:password@localhost:5432/database_name"
+POSTGRES_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_ADDR}:5432/${POSTGRES_DB}"
 ```
