@@ -41,7 +41,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@v3.10.0
         with:
-          cosign-release: 'v2.2.4'
+          cosign-release: 'v3.0.2'
 
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
@@ -103,3 +103,4 @@ jobs:
           subject-name: index.docker.io/my-docker-hub-namespace/my-docker-hub-repository
           subject-digest: ${{ steps.build-and-push.outputs.digest }}
           push-to-registry: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
