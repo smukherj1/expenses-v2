@@ -22,11 +22,20 @@ services:
     ports:
       - "3000:3000"
     networks:
+      - frontend
       - backend
+
+  cloudflare-tunnel:
+    image: cloudflare/cloudflared:2025.9.1
+    command: ["tunnel", "run", "--token", "${CLOUDFLARE_TUNNEL_TOKEN}"]
+    networks:
+      - frontend
 
 volumes:
   db_data:
 
 networks:
+  frontend:
+    driver: bridge
   backend:
     driver: bridge

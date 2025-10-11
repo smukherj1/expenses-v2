@@ -29,4 +29,7 @@ POSTGRES_DB=""
 POSTGRES_PASSWORD=""
 # Should be in the format postgresql://username:password@localhost:5432/database_name
 POSTGRES_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_ADDR}:5432/${POSTGRES_DB}"
+
+# Cloud flare tunnel
+CLOUDFLARE_TUNNEL_TOKEN=""
 ```
