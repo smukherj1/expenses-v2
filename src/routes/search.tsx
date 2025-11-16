@@ -38,7 +38,7 @@ const GetTxnsServerFn = createServerFn({
   method: "GET",
 })
   .middleware([authMiddleware])
-  .validator(GetTxnsSearchParamsSchema)
+  .inputValidator(GetTxnsSearchParamsSchema)
   .handler(async ({ data, context }) => {
     const opts = GetTxnsSearchParamsToOpts(data);
     opts.pageSize =
@@ -53,7 +53,7 @@ const updateTxnsTagSchema = z.object({
 
 const UpdateTxnsTagServerFn = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator(updateTxnsTagSchema)
+  .inputValidator(updateTxnsTagSchema)
   .handler(async ({ data, context }) =>
     UpdateTxnsTag({
       session: context.session,

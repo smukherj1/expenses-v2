@@ -1,5 +1,6 @@
 services:
   db:
+    hostname: db
     image: postgres:18.0-alpine3.22
     restart: unless-stopped
     container_name: expenses-db
@@ -14,28 +15,20 @@ services:
     networks:
       - backend
 
-  expenses-server:
-    image: ghcr.io/smukherj1/expenses-v2:main
-    env_file:
-      - path: ./.env
-        required: true
-    ports:
-      - "3000:3000"
-    networks:
-      - frontend
-      - backend
-
-  cloudflare-tunnel:
-    image: cloudflare/cloudflared:2025.9.1
-    command: ["tunnel", "run", "--token", "${CLOUDFLARE_TUNNEL_TOKEN}"]
-    networks:
-      - frontend
+  # expenses-server:
+  #   image: ghcr.io/smukherj1/expenses-v2:main
+  #   env_file:
+  #     - path: ./.env
+  #       required: true
+  #   ports:
+  #     - "3000:3000"
+  #   networks:
+  #     - frontend
+  #     - backend
 
 volumes:
   db_data:
 
 networks:
-  frontend:
-    driver: bridge
   backend:
     driver: bridge

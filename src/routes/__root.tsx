@@ -1,42 +1,45 @@
-/// <reference types="vite/client" />
-import * as React from "react";
 import {
-  Outlet,
-  createRootRoute,
   HeadContent,
   Scripts,
+  createRootRouteWithContext,
   DefaultGlobalNotFound,
-} from "@tanstack/react-router";
-import Navbar from "src/components/navbar";
-import appCSS from "@/styles/app.css?url";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { Toaster } from "@/components/ui/sonner";
-import { getAuthSession } from "@/lib/auth-shared";
+} from '@tanstack/react-router'
+import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
+import { TanStackDevtools } from '@tanstack/react-devtools'
+import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
+import appCss from '../styles.css?url'
+import type { QueryClient } from '@tanstack/react-query'
+import { Toaster } from '@/components/ui/sonner'
+import Navbar from 'src/components/navbar'
+import { getAuthSession } from '@/lib/auth-shared'
 
-// Tanstack Query client.
-const queryClient = new QueryClient();
+interface MyRouterContext {
+  queryClient: QueryClient
+}
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: () => ({
     meta: [
       {
-        charSet: "utf-8",
+        charSet: 'utf-8',
       },
       {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1",
+        name: 'viewport',
+        content: 'width=device-width, initial-scale=1',
       },
       {
-        title: "Expenses Tracker",
+        title: 'Expenses Tracker',
       },
     ],
-    links: [{ rel: "stylesheet", href: appCSS }],
+    links: [
+      {
+        rel: 'stylesheet',
+        href: appCss,
+      },
+    ],
   }),
-  loader: async () => {
-    return getAuthSession();
-  },
-  component: RootComponent,
+  loader: async () => getAuthSession(),
+  shellComponent: RootDocument,
   notFoundComponent: DefaultGlobalNotFound,
   errorComponent: (props) => {
     return (
@@ -44,40 +47,35 @@ export const Route = createRootRoute({
         <span>Error loading page:</span>
         <p>{props.error.message}</p>
       </div>
-    );
+    )
   },
-});
+})
 
-function RootComponent() {
-  const [showDevtools, setShowDevtools] = React.useState(false);
-  const session = Route.useLoaderData();
-
-  React.useEffect(() => {
-    // @ts-expect-error
-    window.toggleDevtools = () => setShowDevtools((old) => !old);
-  }, []);
+function RootDocument({ children }: { children: React.ReactNode }) {
+  const session = Route.useLoaderData()
   return (
-    <RootDocument>
-      <Toaster richColors position="top-center" />
-      <QueryClientProvider client={queryClient}>
-        <Navbar session={session} />
-        <Outlet />
-        {showDevtools && <ReactQueryDevtools initialIsOpen={false} />}
-      </QueryClientProvider>
-    </RootDocument>
-  );
-}
-
-function RootDocument({ children }: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <html className="dark">
+    <html lang="en" className="dark">
       <head>
         <HeadContent />
       </head>
       <body>
+        <Navbar session={session} />
         {children}
+        <Toaster richColors position="top-center" />
+        <TanStackDevtools
+          config={{
+            position: 'bottom-right',
+          }}
+          plugins={[
+            {
+              name: 'Tanstack Router',
+              render: <TanStackRouterDevtoolsPanel />,
+            },
+            TanStackQueryDevtools,
+          ]}
+        />
         <Scripts />
       </body>
     </html>
-  );
+  )
 }

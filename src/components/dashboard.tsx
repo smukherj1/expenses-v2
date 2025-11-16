@@ -1,5 +1,5 @@
-import * as React from "react";
-import TransactionsPieChart from "./transactions-pie-chart";
+import * as React from 'react'
+import TransactionsPieChart from './transactions-pie-chart'
 import {
   AggregateTxnTagYears,
   FilterTxnInstitutions,
@@ -14,7 +14,7 @@ import {
   TxnsTagYearInst,
   YearsFromTxnsTagYears,
   AggregateTxnsTagYearInsts,
-} from "@/lib/transactions";
+} from '@/lib/transactions'
 import {
   Select,
   SelectContent,
@@ -23,77 +23,77 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import MultiSelect from "./multi-select";
-import TransactionsBarChart from "./transactions-bar-chart";
+} from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
+import MultiSelect from './multi-select'
+import TransactionsBarChart from './transactions-bar-chart'
 
 interface Props {
-  data: TxnsTagYearInst[];
+  data: TxnsTagYearInst[]
 }
 
 export default function Dashboard({ data }: Props) {
   // First stage: Compute the unique years the data covers.
   const [minYear, maxYear] = React.useMemo(() => {
-    const allYears = YearsFromTxnsTagYears(data);
-    const minYear = allYears.length > 0 ? Math.min(...allYears) : 2010;
-    const maxYear = allYears.length > 0 ? Math.max(...allYears) : 2010;
+    const allYears = YearsFromTxnsTagYears(data)
+    const minYear = allYears.length > 0 ? Math.min(...allYears) : 2010
+    const maxYear = allYears.length > 0 ? Math.max(...allYears) : 2010
 
-    return [minYear, maxYear];
-  }, [data]);
+    return [minYear, maxYear]
+  }, [data])
 
   // Second stage: Based on the min and max years in the data, initialize
   // and update the state of the dropdowns allowing the user to select the
   // range of years of data to display in the dashboard charts.
-  const [fromYear, setFromYear] = React.useState<number>(minYear);
-  const [toYear, setToYear] = React.useState<number>(maxYear);
+  const [fromYear, setFromYear] = React.useState<number>(minYear)
+  const [toYear, setToYear] = React.useState<number>(maxYear)
   if (fromYear < minYear || fromYear > maxYear) {
-    setFromYear(minYear);
+    setFromYear(minYear)
   }
   if (toYear < minYear || toYear > maxYear) {
-    setToYear(maxYear);
+    setToYear(maxYear)
   }
   if (fromYear > toYear) {
-    setFromYear(toYear);
+    setFromYear(toYear)
   }
 
   // Third stage: Filter the data to only cover the years selected by the user. Compute
   // the list of institutions from the filtered transactions.
   const [yearFilteredData, institutions] = React.useMemo(() => {
-    const filtered = FilterTxnYears(data, { fromYear, toYear });
-    const institutions = InstitutionsFromTxnsTagYearInsts(data);
-    return [filtered, institutions];
-  }, [data]);
+    const filtered = FilterTxnYears(data, { fromYear, toYear })
+    const institutions = InstitutionsFromTxnsTagYearInsts(data)
+    return [filtered, institutions]
+  }, [data])
 
   // Fourth state: Initialize and update the state of the dropdown allowing the user to
   // select the instututions they'd like to display the data for in the dashboard.
   const [selectedInsts, setSelectedInsts] =
-    React.useState<string[]>(institutions);
+    React.useState<string[]>(institutions)
 
   // If the computed list of institutions changed, e.g., due to selecting a range of
   // years, update the selection back to selecting all institutions.
   React.useEffect(() => {
-    setSelectedInsts(institutions);
-  }, [institutions]);
+    setSelectedInsts(institutions)
+  }, [institutions])
 
   // Fifth stage: Filter the to only cover the institutions selected by the users. Compute
   // the list of tags from the filtered transactions.
   const [filteredInsts, tags] = React.useMemo(() => {
-    const filtered = FilterTxnInstitutions(yearFilteredData, selectedInsts);
-    const tags = TagsFromTxnsTagYears(filtered);
-    return [filtered, tags];
-  }, [yearFilteredData, selectedInsts]);
+    const filtered = FilterTxnInstitutions(yearFilteredData, selectedInsts)
+    const tags = TagsFromTxnsTagYears(filtered)
+    return [filtered, tags]
+  }, [yearFilteredData, selectedInsts])
 
   // Sixth stage: Initialize and update the state of the dropdown allowing the user to
   // select the tags they'd like to display the data for in the dashboard.
   const [selectedTags, setSelectedTags] =
-    React.useState<(string | null)[]>(tags);
+    React.useState<(string | null)[]>(tags)
 
   // If the computed list of tags changed, e.g, due to selecting a range of years,
   // update the selection tags back to selecting all the new set of tags.
   React.useEffect(() => {
-    setSelectedTags(tags);
-  }, [tags]);
+    setSelectedTags(tags)
+  }, [tags])
 
   // Seventh stage: Filter the data based on the tags selected by the user. Then,
   // aggregate the data across the institutions. After this, the data is split into
@@ -105,22 +105,22 @@ export default function Dashboard({ data }: Props) {
     React.useMemo(() => {
       const filteredTagData = FilterTxnTags(filteredInsts, {
         tags: selectedTags,
-      });
-      const instAggregated = AggregateTxnsTagYearInsts(filteredTagData);
-      const allTxns = AggregateTxnTagYears(instAggregated);
-      const { inflow, outflow } = SplitTxnsByFlow(instAggregated);
+      })
+      const instAggregated = AggregateTxnsTagYearInsts(filteredTagData)
+      const allTxns = AggregateTxnTagYears(instAggregated)
+      const { inflow, outflow } = SplitTxnsByFlow(instAggregated)
       const [agInflow, agOutFlow] = [
         AggregateTxnTagYears(inflow),
         AggregateTxnTagYears(outflow),
-      ];
+      ]
       return [
         TopTxnTagsByAmount(agInflow),
         TopTxnTagsByAmount(agOutFlow),
         TopTxnTagsByCount(allTxns),
         TopTxnTagYearsByAmount(inflow),
         TopTxnTagYearsByAmount(outflow),
-      ];
-    }, [filteredInsts, selectedTags]);
+      ]
+    }, [filteredInsts, selectedTags])
 
   return (
     <div>
@@ -129,7 +129,7 @@ export default function Dashboard({ data }: Props) {
           <Label>From</Label>
           <Select
             value={fromYear.toString()}
-            onValueChange={(v) => setFromYear(parseInt(v, 10))}
+            onValueChange={(v: string) => setFromYear(parseInt(v, 10))}
           >
             <SelectTrigger>
               <SelectValue placeholder="From Year" />
@@ -139,7 +139,7 @@ export default function Dashboard({ data }: Props) {
                 <SelectLabel>From</SelectLabel>
                 {Array.from(
                   { length: toYear - minYear + 1 },
-                  (_, i) => minYear + i
+                  (_, i) => minYear + i,
                 ).map((year) => (
                   <SelectItem key={`from-${year}`} value={year.toString()}>
                     {year}
@@ -153,7 +153,7 @@ export default function Dashboard({ data }: Props) {
           <Label>To</Label>
           <Select
             value={toYear.toString()}
-            onValueChange={(v) => setToYear(parseInt(v, 10))}
+            onValueChange={(v: string) => setToYear(parseInt(v, 10))}
           >
             <SelectTrigger>
               <SelectValue placeholder="To Year" />
@@ -163,7 +163,7 @@ export default function Dashboard({ data }: Props) {
                 <SelectLabel>To</SelectLabel>
                 {Array.from(
                   { length: maxYear - fromYear + 1 },
-                  (_, i) => fromYear + i
+                  (_, i) => fromYear + i,
                 ).map((year) => (
                   <SelectItem key={`to-${year}`} value={year.toString()}>
                     {year}
@@ -223,5 +223,5 @@ export default function Dashboard({ data }: Props) {
         data={inflow}
       />
     </div>
-  );
+  )
 }

@@ -1,23 +1,27 @@
 import { defineConfig } from "vite";
-import tsConfigPaths from "vite-tsconfig-paths";
+import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
+import viteTsConfigPaths from "vite-tsconfig-paths";
+import tailwindcss from "@tailwindcss/vite";
+import { nitro } from "nitro/vite";
 
-export default defineConfig({
-  server: {
-    port: 3000,
-  },
+const config = defineConfig({
   plugins: [
-    tsConfigPaths(),
-    tanstackStart({
-      customViteReactPlugin: true,
-      target: "bun",
+    devtools(),
+    nitro(),
+    // this is the plugin that enables path aliases
+    viteTsConfigPaths({
+      projects: ["./tsconfig.json"],
     }),
-    viteReact(),
+    tailwindcss(),
+    tanstackStart(),
+    viteReact({
+      babel: {
+        plugins: ["babel-plugin-react-compiler"],
+      },
+    }),
   ],
-  // Enable to debug hydration errors in production builds.
-  // build: {
-  //   sourcemap: true,
-  //   minify: false,
-  // },
 });
+
+export default config;

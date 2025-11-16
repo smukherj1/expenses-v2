@@ -1,57 +1,47 @@
-import * as React from "react";
-import SocialLogin from "@/components/social-login";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
-import { toast } from "sonner";
-import { authClient } from "@/lib/client/auth";
-import { useMutation } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
-import { ensureNotLoggedIn } from "@/lib/auth-shared";
+import * as React from 'react'
+import SocialLogin from '@/components/social-login'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
+import { toast } from 'sonner'
+import { useMutation } from '@tanstack/react-query'
+import { Loader2 } from 'lucide-react'
+import { ensureNotLoggedIn } from '@/lib/auth-shared'
 
-export const Route = createFileRoute("/signup")({
+export const Route = createFileRoute('/signup')({
   beforeLoad: async () => {
-    await ensureNotLoggedIn();
+    await ensureNotLoggedIn()
   },
   component: Signup,
-});
+})
 
 async function signupEmail({
   email,
   password,
   confirmPassword,
-  onSuccess,
 }: {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  onSuccess: () => void;
+  email: string
+  password: string
+  confirmPassword: string
+  onSuccess: () => void
 }) {
   if (password !== confirmPassword) {
-    toast.error("Passwords do not match.");
-    return;
+    toast.error('Passwords do not match.')
+    return
   }
-  await authClient.signUp.email(
-    { email, password, name: email },
-    {
-      onSuccess,
-      onError: (ctx) => {
-        toast.error(`Sign up failed: ${ctx.error.message}`);
-      },
-    }
-  );
+  toast.error(`Unable to sign up as ${email}, sign up is not supported yet`)
 }
 
 function Signup() {
-  const router = useRouter();
-  const redirectHome = () => router.navigate({ to: "/" });
+  const router = useRouter()
+  const redirectHome = () => router.navigate({ to: '/' })
 
-  const [email, setEmail] = React.useState<string>("");
-  const [password, setPassword] = React.useState<string>("");
-  const [confirmPassword, setConfirmPassword] = React.useState<string>("");
-  const signupMutator = useMutation({ mutationFn: signupEmail });
+  const [email, setEmail] = React.useState<string>('')
+  const [password, setPassword] = React.useState<string>('')
+  const [confirmPassword, setConfirmPassword] = React.useState<string>('')
+  const signupMutator = useMutation({ mutationFn: signupEmail })
   return (
     <div className="flex flex-col gap-6 max-w-md mx-auto mt-8">
       <Card className="overflow-hidden p-0">
@@ -59,13 +49,13 @@ function Signup() {
           <form
             className="p-6 md:p-8"
             onSubmit={(e) => {
-              e.preventDefault();
+              e.preventDefault()
               signupMutator.mutate({
                 email,
                 password,
                 confirmPassword,
                 onSuccess: redirectHome,
-              });
+              })
             }}
           >
             <div className="flex flex-col gap-6">
@@ -114,12 +104,12 @@ function Signup() {
                 {signupMutator.isPending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  "Sign Up"
+                  'Sign Up'
                 )}
               </Button>
               <SocialLogin />
               <div className="text-center text-sm">
-                Already have an account?{" "}
+                Already have an account?{' '}
                 <Link to="/" className="underline underline-offset-4">
                   Login
                 </Link>
@@ -129,9 +119,9 @@ function Signup() {
         </CardContent>
       </Card>
       <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
+        By clicking continue, you agree to our <a href="#">Terms of Service</a>{' '}
         and <a href="#">Privacy Policy</a>.
       </div>
     </div>
-  );
+  )
 }

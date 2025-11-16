@@ -1,10 +1,10 @@
-import { UploadTxns } from "@/lib/server/db/transactions";
-import { NewTxnSchema } from "@/lib/transactions";
-import { formatZodError } from "@/lib/zodutils";
-import { useMutation } from "@tanstack/react-query";
-import { createServerFn, useServerFn } from "@tanstack/react-start";
-import { z } from "zod/v4";
-import { Button } from "@/components/ui/button";
+import { UploadTxns } from '@/lib/server/db/transactions'
+import { NewTxnSchema } from '@/lib/transactions'
+import { formatZodError } from '@/lib/zodutils'
+import { useMutation } from '@tanstack/react-query'
+import { createServerFn, useServerFn } from '@tanstack/react-start'
+import { z } from 'zod/v4'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -12,63 +12,62 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { authMiddleware } from "@/lib/server/auth";
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { authMiddleware } from '@/lib/server/auth'
 
-const txnsSchema = z.array(NewTxnSchema);
+const txnsSchema = z.array(NewTxnSchema)
 
 const uploadTxns = createServerFn({
-  method: "POST",
-  response: "data",
+  method: 'POST',
 })
   .middleware([authMiddleware])
-  .validator((data) => {
+  .inputValidator((data) => {
     if (!(data instanceof FormData)) {
-      throw new Error("Invalid form data");
+      throw new Error('Invalid form data')
     }
-    const file = data.get("json-file");
+    const file = data.get('json-file')
     if (!(file instanceof File)) {
-      throw new Error("Did not receive a valid file in uploaded form");
+      throw new Error('Did not receive a valid file in uploaded form')
     }
     return {
       file: file,
-    };
+    }
   })
   .handler(async ({ data: { file }, context }) => {
-    const contents = await file.text();
-    var json: any;
+    const contents = await file.text()
+    var json: any
     try {
       json = JSON.parse(contents, (key, value) => {
-        if (key === "date" && typeof value === "string") {
-          return new Date(value);
+        if (key === 'date' && typeof value === 'string') {
+          return new Date(value)
         }
-        return value;
-      });
+        return value
+      })
     } catch (error) {
-      throw new Error(`invalid JSON file: ${error}`);
+      throw new Error(`invalid JSON file: ${error}`)
     }
-    const result = txnsSchema.safeParse(json, { reportInput: true });
+    const result = txnsSchema.safeParse(json, { reportInput: true })
     if (!result.success) {
-      const errorStr = formatZodError(result.error);
+      const errorStr = formatZodError(result.error)
       throw new Error(
-        `Transactions JSON did not have the expected schema: ${errorStr}`
-      );
+        `Transactions JSON did not have the expected schema: ${errorStr}`,
+      )
     }
-    var uploaded = 0;
+    var uploaded = 0
     try {
-      uploaded = await UploadTxns(context.session, result.data);
+      uploaded = await UploadTxns(context.session, result.data)
     } catch (error) {
-      console.log(`Error uploading transactions: ${error}`);
-      throw new Error("Error saving uploaded transactions to the database");
+      console.log(`Error uploading transactions: ${error}`)
+      throw new Error('Error saving uploaded transactions to the database')
     }
-    return uploaded;
-  });
+    return uploaded
+  })
 
 export default function Component() {
   const uploader = useMutation({
     mutationFn: useServerFn(uploadTxns),
-  });
+  })
 
   return (
     <Card className="w-96 md:w-240">
@@ -76,10 +75,10 @@ export default function Component() {
         method="post"
         encType="multipart/form-data"
         onSubmit={async (e) => {
-          e.preventDefault();
-          const form = e.currentTarget;
-          const formData = new FormData(form);
-          uploader.mutate({ data: formData });
+          e.preventDefault()
+          const form = e.currentTarget
+          const formData = new FormData(form)
+          uploader.mutate({ data: formData })
         }}
         className="flex flex-col gap-y-4"
       >
@@ -116,5 +115,5 @@ export default function Component() {
         </CardFooter>
       </form>
     </Card>
-  );
+  )
 }

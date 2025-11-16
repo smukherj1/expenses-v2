@@ -1,29 +1,25 @@
-import { createMiddleware } from "@tanstack/react-start";
-import { getWebRequest } from "@tanstack/react-start/server";
-import { auth } from "@/lib/auth";
+import { createMiddleware } from '@tanstack/react-start'
+import { Session } from '@/lib/auth-shared'
 
-export const authMiddleware = createMiddleware({ type: "function" }).server(
+export const authMiddleware = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
-    const request = getWebRequest();
-    const session = await auth.api.getSession({ headers: request.headers });
-    if (session === null) {
-      throw new Error(
-        `Unauthenticated: permission denied to protected server API`
-      );
-    }
-    return next({ context: { session } });
-  }
-);
+    return next({ context: { session: fakeSession() } })
+  },
+)
 
-export const authAPIMiddleware = createMiddleware({ type: "request" }).server(
+export const authAPIMiddleware = createMiddleware({ type: 'request' }).server(
   async ({ next }) => {
-    const request = getWebRequest();
-    const session = await auth.api.getSession({ headers: request.headers });
-    if (session === null) {
-      throw new Error(
-        `Unauthenticated: permission denied to protected server API`
-      );
-    }
-    return next({ context: { session } });
+    return next({ context: { session: fakeSession() } })
+  },
+)
+
+function fakeSession(): Session {
+  return {
+    user: {
+      id: '0',
+      email: 'test@gmail.com',
+      name: 'Test User',
+      image: null,
+    },
   }
-);
+}

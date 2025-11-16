@@ -34,3 +34,14 @@ Example JSON below:
     {"date": "2020/01/03", "description": "Payroll Deposit - Acme Corp", "amount": "100", "institution": "TD_CHEQUING", "tag": "salary"},
 ]
 ```
+
+# DB Access for Development
+
+```shell
+
+# On the Kubernetes node running the Postgres db
+kubectl -n expenses port-forward svc/expenses-db-cluster-rw 5432:5432
+
+# On the development machine, create ssh tunnel to Kubernete node
+ssh -L 5432:localhost:5432 user@ssh_server_address
+```

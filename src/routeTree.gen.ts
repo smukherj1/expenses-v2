@@ -8,17 +8,12 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createServerRootRoute } from '@tanstack/react-start/server'
-
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ManageRouteImport } from './routes/manage'
 import { Route as IndexRouteImport } from './routes/index'
-import { ServerRoute as ApiTransactionsServerRouteImport } from './routes/api/transactions'
-import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
-
-const rootServerRouteImport = createServerRootRoute()
+import { Route as ApiTransactionsRouteImport } from './routes/api/transactions'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -40,15 +35,10 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiTransactionsServerRoute = ApiTransactionsServerRouteImport.update({
+const ApiTransactionsRoute = ApiTransactionsRouteImport.update({
   id: '/api/transactions',
   path: '/api/transactions',
-  getParentRoute: () => rootServerRouteImport,
-} as any)
-const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
-  getParentRoute: () => rootServerRouteImport,
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -56,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/manage': typeof ManageRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/api/transactions': typeof ApiTransactionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/manage': typeof ManageRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/api/transactions': typeof ApiTransactionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -69,13 +61,14 @@ export interface FileRoutesById {
   '/manage': typeof ManageRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/api/transactions': typeof ApiTransactionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/manage' | '/search' | '/signup'
+  fullPaths: '/' | '/manage' | '/search' | '/signup' | '/api/transactions'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/manage' | '/search' | '/signup'
-  id: '__root__' | '/' | '/manage' | '/search' | '/signup'
+  to: '/' | '/manage' | '/search' | '/signup' | '/api/transactions'
+  id: '__root__' | '/' | '/manage' | '/search' | '/signup' | '/api/transactions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -83,31 +76,7 @@ export interface RootRouteChildren {
   ManageRoute: typeof ManageRoute
   SearchRoute: typeof SearchRoute
   SignupRoute: typeof SignupRoute
-}
-export interface FileServerRoutesByFullPath {
-  '/api/transactions': typeof ApiTransactionsServerRoute
-  '/api/auth/$': typeof ApiAuthSplatServerRoute
-}
-export interface FileServerRoutesByTo {
-  '/api/transactions': typeof ApiTransactionsServerRoute
-  '/api/auth/$': typeof ApiAuthSplatServerRoute
-}
-export interface FileServerRoutesById {
-  __root__: typeof rootServerRouteImport
-  '/api/transactions': typeof ApiTransactionsServerRoute
-  '/api/auth/$': typeof ApiAuthSplatServerRoute
-}
-export interface FileServerRouteTypes {
-  fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths: '/api/transactions' | '/api/auth/$'
-  fileServerRoutesByTo: FileServerRoutesByTo
-  to: '/api/transactions' | '/api/auth/$'
-  id: '__root__' | '/api/transactions' | '/api/auth/$'
-  fileServerRoutesById: FileServerRoutesById
-}
-export interface RootServerRouteChildren {
-  ApiTransactionsServerRoute: typeof ApiTransactionsServerRoute
-  ApiAuthSplatServerRoute: typeof ApiAuthSplatServerRoute
+  ApiTransactionsRoute: typeof ApiTransactionsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -140,23 +109,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-  }
-}
-declare module '@tanstack/react-start/server' {
-  interface ServerFileRoutesByPath {
     '/api/transactions': {
       id: '/api/transactions'
       path: '/api/transactions'
       fullPath: '/api/transactions'
-      preLoaderRoute: typeof ApiTransactionsServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatServerRouteImport
-      parentRoute: typeof rootServerRouteImport
+      preLoaderRoute: typeof ApiTransactionsRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -166,14 +124,17 @@ const rootRouteChildren: RootRouteChildren = {
   ManageRoute: ManageRoute,
   SearchRoute: SearchRoute,
   SignupRoute: SignupRoute,
+  ApiTransactionsRoute: ApiTransactionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-const rootServerRouteChildren: RootServerRouteChildren = {
-  ApiTransactionsServerRoute: ApiTransactionsServerRoute,
-  ApiAuthSplatServerRoute: ApiAuthSplatServerRoute,
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
 }
-export const serverRouteTree = rootServerRouteImport
-  ._addFileChildren(rootServerRouteChildren)
-  ._addFileTypes<FileServerRouteTypes>()

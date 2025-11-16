@@ -5,28 +5,30 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "./ui/button";
-import { authClient } from "@/lib/client/auth";
-import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
-import { User } from "@/lib/auth-shared";
+} from '@/components/ui/dropdown-menu'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from './ui/button'
+import { useMutation } from '@tanstack/react-query'
+import { useRouter } from '@tanstack/react-router'
+import { Loader2 } from 'lucide-react'
+import { User } from '@/lib/auth-shared'
+import { toast } from 'sonner'
 
 export type Props = {
-  user: User;
-};
+  user: User
+}
 
 export function UserAvatar({ user }: Props) {
-  const router = useRouter();
+  const router = useRouter()
 
-  const redirectHome = () => router.navigate({ to: "/" });
+  const redirectHome = () => router.navigate({ to: '/' })
 
   const signoutMutator = useMutation({
-    mutationFn: () =>
-      authClient.signOut({ fetchOptions: { onSuccess: redirectHome } }),
-  });
+    mutationFn: async () => {
+      toast.error(`Signing out is not supported yet!`)
+      redirectHome()
+    },
+  })
 
   return (
     <DropdownMenu>
@@ -34,16 +36,16 @@ export function UserAvatar({ user }: Props) {
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
             <AvatarImage
-              src={user.image ?? "/user-avatar.svg"}
-              alt={user.name ?? "User"}
+              src={user.image ?? '/user-avatar.svg'}
+              alt={user.name ?? 'User'}
             />
             <AvatarFallback>
               {user.name
                 ? user.name
-                    .split(" ")
+                    .split(' ')
                     .map((n) => n[0])
-                    .join("")
-                : "U"}
+                    .join('')
+                : 'U'}
             </AvatarFallback>
           </Avatar>
         </Button>
@@ -66,5 +68,5 @@ export function UserAvatar({ user }: Props) {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }
