@@ -1,13 +1,14 @@
+# Docker compose for local development with containerization.
 services:
   db:
     hostname: db
     image: postgres:18.0-alpine3.22
     restart: unless-stopped
-    container_name: expenses-db
+    container_name: db
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
     volumes:
@@ -15,16 +16,17 @@ services:
     networks:
       - backend
 
-  # expenses-server:
-  #   image: ghcr.io/smukherj1/expenses-v2:main
-  #   env_file:
-  #     - path: ./.env
-  #       required: true
-  #   ports:
-  #     - "3000:3000"
-  #   networks:
-  #     - frontend
-  #     - backend
+  expenses-server:
+    hostname: expenses-server
+    image: ghcr.io/smukherj1/expenses-v2:main
+    container_name: expenses-server
+    env_file:
+      - path: ./.env
+        required: true
+    ports:
+      - "3000:3000"
+    networks:
+      - backend
 
 volumes:
   db_data:

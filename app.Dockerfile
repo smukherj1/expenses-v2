@@ -1,38 +1,22 @@
-# use the official Bun image
-# see all versions at https://hub.docker.com/r/oven/bun/tags
-FROM oven/bun:1-alpine AS base
+FROM node:25.2-alpine3.21 AS base
 WORKDIR /app
 
-# install dependencies into temp directory
-# this will cache them and speed up future builds
 FROM base AS install
-RUN mkdir -p /temp/dev
-COPY package.json bun.lock /temp/dev/
-# Delete the bun cache after install because it seems to slow down
-# the production install later. Without this, the next install takes 
-# ~70-80s vs 10s when using npm. May be related to
-# https://github.com/oven-sh/bun/issues/10371.
-RUN cd /temp/dev && bun install --frozen-lockfile && rm -rf ~/.bun/install
-
-# install with --production (exclude devDependencies)
 RUN mkdir -p /temp/prod
-COPY package.json bun.lock /temp/prod/
-RUN cd /temp/prod && bun install --frozen-lockfile --production --no-cache
+COPY package*.json /temp/prod/
+RUN cd /temp/prod && npm ci --omit=dev
 
-# copy node_modules from temp directory
-# then copy all (non-ignored) project files into the image
-FROM base AS builder
-COPY --from=install /temp/dev/node_modules node_modules
+FROM install AS builder
+COPY --from=install /temp/prod/node_modules node_modules
 COPY . .
-RUN bun run build
+RUN npm ci
+RUN npm run build
 
-# copy production dependencies and source code into final image
 FROM base AS release
 COPY --from=install /temp/prod/node_modules node_modules
 COPY --from=builder /app/.output .output
 COPY --from=builder /app/package.json .
 
-# run the app
-USER bun
+USER node
 EXPOSE 3000/tcp
-ENTRYPOINT [ "bun", ".output/server/index.mjs" ]
+ENTRYPOINT [ "node", ".output/server/index.mjs" ]
