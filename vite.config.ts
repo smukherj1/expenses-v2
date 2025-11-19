@@ -7,6 +7,10 @@ import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
 
 const config = defineConfig({
+  server: {
+    port: 3000,
+    host: '0.0.0.0',
+  },
   ssr: {
     noExternal: [
       // To ensure Vite bundles recharts dependencies for
