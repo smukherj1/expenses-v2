@@ -6,18 +6,7 @@ import {
   timestamp,
   index,
 } from 'drizzle-orm/pg-core'
-
-export const user = pgTable('user', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  email: text('email').notNull().unique(),
-  image: text('image'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at')
-    .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
-    .notNull(),
-})
+import { user } from './auth'
 
 export const transactionsTable = pgTable(
   'transactions',
