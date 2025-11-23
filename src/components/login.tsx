@@ -11,7 +11,10 @@ async function signIn() {
     callbackURL: "/",
 
   });
-  toast.info(`Login result: ${JSON.stringify(response.data)}, ${JSON.stringify(response.error)}`)
+  if (response.error !== null) {
+    toast.error(`Login failed: ${response.error}`)
+    return;
+  }
 }
 
 export type Props = {
@@ -50,7 +53,7 @@ export default function Login() {
               </Button>
               <div className="text-center text-sm">
                 Don&apos;t have an account?{' '}
-                <a href="youtube.com" className="underline underline-offset-4">
+                <a href="https://keycloak.suvanjanlabs.com/realms/homelab/account" className="underline underline-offset-4">
                   Sign up
                 </a>
               </div>

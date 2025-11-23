@@ -3,7 +3,7 @@ import Login from '@/components/login'
 import { getAuthSession } from '@/lib/auth-shared'
 import { authMiddleware } from '@/lib/server/auth'
 import { GetTxnsByYearAndTag } from '@/lib/server/db/transactions'
-import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 
 const GetTxnsByYearAndTagServerFn = createServerFn({
@@ -29,8 +29,6 @@ export const Route = createFileRoute('/')({
 })
 
 function Home() {
-  console.log(`Loading home`)
-  const router = useRouter()
   const { data, session } = Route.useLoaderData()
 
   if (session !== null) {
@@ -38,5 +36,5 @@ function Home() {
     return <Dashboard data={data || []} />
   }
   // User not logged in.
-  return <Login onLogin={() => router.invalidate()} />
+  return <Login />
 }

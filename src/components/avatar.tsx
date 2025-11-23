@@ -12,7 +12,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import { Loader2 } from 'lucide-react'
 import { User } from '@/lib/auth-shared'
-import { toast } from 'sonner'
+import { authClient } from "@/lib/client/auth";
 
 export type Props = {
   user: User
@@ -24,10 +24,7 @@ export function UserAvatar({ user }: Props) {
   const redirectHome = () => router.navigate({ to: '/' })
 
   const signoutMutator = useMutation({
-    mutationFn: async () => {
-      toast.error(`Signing out is not supported yet!`)
-      redirectHome()
-    },
+    mutationFn: () => authClient.signOut({ fetchOptions: { onSuccess: redirectHome } }),
   })
 
   return (
@@ -42,9 +39,9 @@ export function UserAvatar({ user }: Props) {
             <AvatarFallback>
               {user.name
                 ? user.name
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
                 : 'U'}
             </AvatarFallback>
           </Avatar>
