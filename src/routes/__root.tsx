@@ -7,7 +7,9 @@ import {
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
-import appCss from '../styles.css?url'
+// Import directly instead of as URL added to the link to prevent a 
+// hydration mismatch.
+import '@/styles.css'
 import type { QueryClient } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/sonner'
 import Navbar from 'src/components/navbar'
@@ -31,12 +33,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         title: 'Expenses Tracker',
       },
     ],
-    links: [
-      {
-        rel: 'stylesheet',
-        href: appCss,
-      },
-    ],
+    links: [],
   }),
   loader: async () => getAuthSession(),
   shellComponent: RootDocument,
