@@ -283,25 +283,25 @@ function toTxnResults(queryResult: fetchedTxn[]): TxnsResult {
   const result: TxnsResult =
     queryResult.length > 0
       ? {
-          txns,
-          totalCount: queryResult[0]!.totalPages,
-          beforeCount: queryResult[0]!.beforeCount,
-          afterCount: queryResult[0]!.afterCount,
-          prev: {
-            date: new Date(queryResult[0]!.prevDate),
-            id: queryResult[0]!.prevId,
-          },
-          next: {
-            date: new Date(queryResult[0]!.nextDate),
-            id: queryResult[0]!.nextId,
-          },
-        }
+        txns,
+        totalCount: queryResult[0]!.totalPages,
+        beforeCount: queryResult[0]!.beforeCount,
+        afterCount: queryResult[0]!.afterCount,
+        prev: {
+          date: new Date(queryResult[0]!.prevDate),
+          id: queryResult[0]!.prevId,
+        },
+        next: {
+          date: new Date(queryResult[0]!.nextDate),
+          id: queryResult[0]!.nextId,
+        },
+      }
       : {
-          txns,
-          totalCount: 0,
-          beforeCount: 0,
-          afterCount: 0,
-        }
+        txns,
+        totalCount: 0,
+        beforeCount: 0,
+        afterCount: 0,
+      }
   return result
 }
 

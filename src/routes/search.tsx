@@ -326,7 +326,7 @@ function Search() {
           if (
             rowIds.length !== selectedTxnIds.length ||
             JSON.stringify([...rowIds].sort()) !==
-              JSON.stringify([...selectedTxnIds].sort())
+            JSON.stringify([...selectedTxnIds].sort())
           ) {
             setSelectedTxnIds(rowIds);
           }

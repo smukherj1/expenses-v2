@@ -72,6 +72,14 @@ export function DataTable<TData, TValue>({
     );
   }, [rowSelection, getRowId, onRowIdSelectionChange]);
 
+  const selectedRowCount = table.getFilteredSelectedRowModel().rows.length;
+  const totalRowCount = table.getFilteredRowModel().rows.length;
+  const pageSize = table.getState().pagination.pageSize;
+  const pageIndex = table.getState().pagination.pageIndex;
+  const pageCount = table.getPageCount();
+  const canPreviousPage = table.getCanPreviousPage();
+  const canNextPage = table.getCanNextPage();
+
   return (
     <div className={cn("overflow-hidden rounded-md border", className)}>
       <Table>
@@ -84,9 +92,9 @@ export function DataTable<TData, TValue>({
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </TableHead>
                 );
               })}
@@ -116,7 +124,19 @@ export function DataTable<TData, TValue>({
           )}
         </TableBody>
       </Table>
-      <DataTablePagination table={table} />
+      <DataTablePagination
+        selectedRowCount={selectedRowCount}
+        totalRowCount={totalRowCount}
+        pageSize={pageSize}
+        pageIndex={pageIndex}
+        pageCount={pageCount}
+        canPreviousPage={canPreviousPage}
+        canNextPage={canNextPage}
+        setPageIndex={table.setPageIndex}
+        setPageSize={table.setPageSize}
+        previousPage={table.previousPage}
+        nextPage={table.nextPage}
+      />
     </div>
   );
 }

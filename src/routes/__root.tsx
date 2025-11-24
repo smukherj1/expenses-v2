@@ -8,7 +8,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 // Import directly instead of as URL added to the link to prevent a 
-// hydration mismatch.
+// hydration mismatch. https://github.com/TanStack/router/issues/3306
 import '../styles.css'
 import type { QueryClient } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/sonner'
