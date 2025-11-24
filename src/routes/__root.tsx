@@ -9,7 +9,7 @@ import { TanStackDevtools } from '@tanstack/react-devtools'
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 // Import directly instead of as URL added to the link to prevent a 
 // hydration mismatch.
-import '@/styles.css'
+import '../styles.css'
 import type { QueryClient } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/sonner'
 import Navbar from 'src/components/navbar'
@@ -49,7 +49,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const session = Route.useLoaderData()
+  const session = Route.useLoaderData();
   return (
     <html lang="en" className="dark">
       <head>
